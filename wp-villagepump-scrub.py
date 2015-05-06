@@ -4,7 +4,7 @@
 import pywikibot
 
 villagePumpTitle = u'Уикипедия:Разговори'
-textToClean = u'<!-- Моля пишете само над този ред. Той винаги трябва да бъде последен. НЕ ГО ИЗТРИВАЙТЕ! -->'
+textToClean = u'<!-- ВЪВЕДЕТЕ СЪОБЩЕНИЕТО СИ НАД ТОЗИ РЕД! НЕ ПИШЕТЕ ПОД НЕГО! НЕ ГО ИЗТРИВАЙТЕ! -->'
 
 myWikiSite = pywikibot.Site()
 villagePumpPage = pywikibot.Page(myWikiSite, villagePumpTitle)
