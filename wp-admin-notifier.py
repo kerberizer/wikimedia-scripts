@@ -26,11 +26,22 @@ mail['From'] = mailFrom
 mail['To'] = mailRcpt
 mail['Subject'] = Header(mailSubj.encode('utf-8'), 'utf-8')
 
+adminReqPagesPrevYear = pagegenerators.PrefixingPageGenerator(
+                            u'Заявки към администраторите/' + str(currentDateTime.year - 1),
+                            namespace=u'Уикипедия',
+                            includeredirects=False)
 
-adminReqPagesPrevYear = pagegenerators.PrefixingPageGenerator(u'Заявки към администраторите/' + str(currentDateTime.year - 1), namespace=u'Уикипедия', includeredirects=False)
-adminReqPagesCurrYear = pagegenerators.PrefixingPageGenerator(u'Заявки към администраторите/' + str(currentDateTime.year), namespace=u'Уикипедия', includeredirects=False)
-adminReqPages = pagegenerators.CombinedPageGenerator([adminReqPagesPrevYear, adminReqPagesCurrYear]) 
-adminReqPagesRecent = pagegenerators.EdittimeFilterPageGenerator(adminReqPages, last_edit_start=lastDateTime)
+adminReqPagesCurrYear = pagegenerators.PrefixingPageGenerator(
+                            u'Заявки към администраторите/' + str(currentDateTime.year),
+                            namespace=u'Уикипедия',
+                            includeredirects=False)
+
+adminReqPages = pagegenerators.CombinedPageGenerator(
+                            [adminReqPagesPrevYear, adminReqPagesCurrYear]) 
+
+adminReqPagesRecent = pagegenerators.EdittimeFilterPageGenerator(
+                            adminReqPages,
+                            last_edit_start=lastDateTime)
 
 revisionCount = 0
 for reqPage in adminReqPagesRecent:
@@ -43,7 +54,10 @@ for reqPage in adminReqPagesRecent:
         mailBody += u'Потребител: %s' % revision.user + '\n'
         mailBody += u'Резюме: %s' % revision.comment + '\n\n'
         if revision._parent_id:
-            diff = difflib.unified_diff(reqPage.getOldVersion(revision._parent_id).splitlines(), revision.text.splitlines(), n=0)
+            diff = difflib.unified_diff(
+                        reqPage.getOldVersion(revision._parent_id).splitlines(),
+                        revision.text.splitlines(),
+                        n=0)
             diff.next()
             diff.next()
             for line in diff:
