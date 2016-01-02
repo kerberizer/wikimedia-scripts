@@ -58,10 +58,16 @@ for reqPage in adminReqPagesRecent:
                         reqPage.getOldVersion(revision._parent_id).splitlines(),
                         revision.text.splitlines(),
                         n=0)
-            diff.next()
-            diff.next()
-            for line in diff:
-                mailBody += line + '\n'
+            # We don't need the diff headers, so iterate with .next() twice over them.
+            # However, if the edit has been empty (e.g. changed only the protection level),
+            # a StopIteration exception will be raised that we need to catch properly.
+            try:
+                diff.next()
+                diff.next()
+                for line in diff:
+                    mailBody += line + '\n'
+            except StopIteration:
+                mailBody += u'НЯМА РАЗЛИКА (ПРОМЯНА НА ЗАЩИТАТА И Т.Н.)\n'
         else:
             mailBody += revision.text + '\n'
         mailBody += '\n- - - 8< - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n\n'
