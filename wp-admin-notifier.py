@@ -45,9 +45,9 @@ adminReqPagesRecent = pagegenerators.EdittimeFilterPageGenerator(
 
 revisionCount = 0
 for reqPage in adminReqPagesRecent:
-    mailBody += '######################################################################\n\n'
-    mailBody += reqPage.title() + '\n\n'
-    mailBody += '######################################################################\n\n'
+    mailBody += '##############################################################################\n\n'
+    mailBody += u'https://bg.wikipedia.org/wiki/' + reqPage.title().replace(' ', '_') + '\n\n'
+    mailBody += '##############################################################################\n\n'
     for revision in reqPage.revisions(reverse=True, starttime=lastDateTime, content=True):
         revisionCount += 1
         mailBody += u'Дата и час: %s' % revision.timestamp + '\n'
