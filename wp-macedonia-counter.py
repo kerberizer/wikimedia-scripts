@@ -1,17 +1,17 @@
-#!/usr/local/bin/python
+#!/usr/bin/env python3
 # -*- coding: utf-8  -*-
 
-import os, pickle, locale, datetime, pywikibot
+import os.path, pickle, locale, datetime, pywikibot
 from pywikibot import pagegenerators
 
 fname_pageTitlesLast = os.path.expanduser('~/.wp-macedonia-counter/titles-last.dat')
 fname_lastDateTime = os.path.expanduser('~/.wp-macedonia-counter/datetime-last.dat')
 
-f = open(fname_pageTitlesLast, 'r')
+f = open(fname_pageTitlesLast, 'rb')
 pageTitlesLast = pickle.load(f)
 f.close()
 
-f = open(fname_lastDateTime, 'r')
+f = open(fname_lastDateTime, 'rb')
 lastDateTime = pickle.load(f)
 f.close()
 
@@ -22,7 +22,7 @@ datePage = pywikibot.Page(mySite, u'Уикипедия:Македония/Бро
 diffPage = pywikibot.Page(mySite, u'Уикипедия:Македония/Брояч/Промени')
 
 locale.setlocale(locale.LC_TIME, 'bg_BG.UTF-8')
-currentDateTime = datetime.datetime.now().strftime('%H:%M на %e %B %Y').decode('utf8').lower()
+currentDateTime = datetime.datetime.now().strftime('%H:%M на %e %B %Y').lower()
 locale.resetlocale(locale.LC_TIME)
 
 referringPages = pagegenerators.ReferringPageGenerator(pywikibot.Page(mySite, myTemplate), onlyTemplateInclusion = True)
@@ -39,10 +39,10 @@ removedTitles = pageTitlesLast.difference(pageTitles)
 
 if addedTitles or removedTitles:
 
-  f = open(fname_lastDateTime, 'w')
+  f = open(fname_lastDateTime, 'wb')
   pickle.dump(currentDateTime, f)
   f.close()
-  f = open(fname_pageTitlesLast, 'w')
+  f = open(fname_pageTitlesLast, 'wb')
   pickle.dump(pageTitles, f)
   f.close()
 

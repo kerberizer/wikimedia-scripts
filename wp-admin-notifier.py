@@ -1,7 +1,7 @@
-#!/usr/local/bin/python
+#!/usr/bin/env python3
 # -*- coding: utf-8  -*-
 
-import datetime, difflib, os, pickle, pywikibot, smtplib
+import datetime, difflib, os.path, pickle, pywikibot, smtplib
 from pywikibot import pagegenerators
 from email.header import Header
 from email.mime.multipart import MIMEMultipart
@@ -9,7 +9,7 @@ from email.mime.text import MIMEText
 
 fname_lastDateTime = os.path.expanduser('~/.wp-admin-notifier/datetime-last.dat')
 
-f = open(fname_lastDateTime, 'r')
+f = open(fname_lastDateTime, 'rb')
 lastDateTime = pickle.load(f)
 f.close()
 
@@ -81,6 +81,6 @@ if revisionCount:
     mailer.sendmail(mailFrom, mailRcpt, mail.as_string())
     mailer.quit()
 
-f = open(fname_lastDateTime, 'w')
+f = open(fname_lastDateTime, 'wb')
 pickle.dump(currentDateTime, f)
 f.close()
