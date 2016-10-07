@@ -26,4 +26,6 @@ villagePumpOrigText = villagePumpPage.text
 villagePumpPage.text = villagePumpPage.text.replace(textToClean, u'')
 
 if not villagePumpPage.text == villagePumpOrigText:
-	villagePumpPage.save(u'Бот: премахване на излишни HTML коментари', force=True)
+    villagePumpPage.save(u'Бот: премахване на излишни HTML коментари', force=True)
+
+# vim:set ts=4 sts=4 sw=4 et:

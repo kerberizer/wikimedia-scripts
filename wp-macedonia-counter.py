@@ -44,38 +44,40 @@ referringPages = pagegenerators.NamespaceFilterPageGenerator(referringPages, [0]
 pageTitles=set()
 count = 0
 for page in referringPages:
-  count += 1
-  pageTitles.add(page.title())
+    count += 1
+    pageTitles.add(page.title())
 
 addedTitles = pageTitles.difference(pageTitlesLast)
 removedTitles = pageTitlesLast.difference(pageTitles)
 
 if addedTitles or removedTitles:
 
-  f = open(fname_lastDateTime, 'wb')
-  pickle.dump(currentDateTime, f)
-  f.close()
-  f = open(fname_pageTitlesLast, 'wb')
-  pickle.dump(pageTitles, f)
-  f.close()
+    f = open(fname_lastDateTime, 'wb')
+    pickle.dump(currentDateTime, f)
+    f.close()
+    f = open(fname_pageTitlesLast, 'wb')
+    pickle.dump(pageTitles, f)
+    f.close()
 
-  listDiff = u'__NOEDITSECTION__\n'
-  listDiff += u'{|\n|<code>' + lastDateTime + '</code>\n|-\n'
-  listDiff += u'| align="center" | <big>\'\'\'↓\'\'\'</big>\n'
-  listDiff += u'|-\n|<code>' + currentDateTime + '</code>\n|}\n'
-  listDiff += u'\n== Добавени ==\n'
+    listDiff = u'__NOEDITSECTION__\n'
+    listDiff += u'{|\n|<code>' + lastDateTime + '</code>\n|-\n'
+    listDiff += u'| align="center" | <big>\'\'\'↓\'\'\'</big>\n'
+    listDiff += u'|-\n|<code>' + currentDateTime + '</code>\n|}\n'
+    listDiff += u'\n== Добавени ==\n'
 
-  for article in addedTitles:
-    listDiff += u'* {{статия|' + article + '}}\n'
+    for article in addedTitles:
+        listDiff += u'* {{статия|' + article + '}}\n'
 
-  listDiff += u'\n== Премахнати ==\n'
+    listDiff += u'\n== Премахнати ==\n'
 
-  for article in removedTitles:
-    listDiff += u'* {{статия|' + article + '}}\n'
+    for article in removedTitles:
+        listDiff += u'* {{статия|' + article + '}}\n'
 
-  countPage.text = str(count)
-  datePage.text = currentDateTime
-  diffPage.text = listDiff
-  countPage.save(u'Бот: актуализация на брояча')
-  datePage.save(u'Бот: актуализация на датата')
-  diffPage.save(u'Бот: актуализация на промените')
+    countPage.text = str(count)
+    datePage.text = currentDateTime
+    diffPage.text = listDiff
+    countPage.save(u'Бот: актуализация на брояча')
+    datePage.save(u'Бот: актуализация на датата')
+    diffPage.save(u'Бот: актуализация на промените')
+
+# vim:set ts=4 sts=4 sw=4 et:

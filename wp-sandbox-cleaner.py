@@ -30,10 +30,10 @@ cleanTemplateIncOnly = reIncOnly.findall(cleanTemplate.text)
 pubSandboxIsClean = u''.join(cleanTemplateIncOnly)
 
 if not pubSandbox.userName() == 'Kerberizer' and not pubSandbox.text == pubSandboxIsClean:
-  currentTime = datetime.datetime.utcnow()
-  lastModified = datetime.datetime.strptime(str(pubSandbox.editTime()), '%Y-%m-%dT%H:%M:%SZ')
-  if not (currentTime - lastModified) < gracePeriod:
-    pubSandbox.text = cleanText
-    pubSandbox.save(u'Бот: почистване на пясъчника')
+    currentTime = datetime.datetime.utcnow()
+    lastModified = datetime.datetime.strptime(str(pubSandbox.editTime()), '%Y-%m-%dT%H:%M:%SZ')
+    if not (currentTime - lastModified) < gracePeriod:
+        pubSandbox.text = cleanText
+        pubSandbox.save(u'Бот: почистване на пясъчника')
 
-# vim: ts=2 =2 sw=2 et
+# vim:set ts=4 sts=4 sw=4 et:

@@ -40,21 +40,21 @@ mail['To'] = mailRcpt
 mail['Subject'] = Header(mailSubj.encode('utf-8'), 'utf-8')
 
 adminReqPagesPrevYear = pagegenerators.PrefixingPageGenerator(
-                            u'Заявки към администраторите/' + str(currentDateTime.year - 1),
-                            namespace=u'Уикипедия',
-                            includeredirects=False)
+    u'Заявки към администраторите/' + str(currentDateTime.year - 1),
+    namespace=u'Уикипедия',
+    includeredirects=False)
 
 adminReqPagesCurrYear = pagegenerators.PrefixingPageGenerator(
-                            u'Заявки към администраторите/' + str(currentDateTime.year),
-                            namespace=u'Уикипедия',
-                            includeredirects=False)
+    u'Заявки към администраторите/' + str(currentDateTime.year),
+    namespace=u'Уикипедия',
+    includeredirects=False)
 
 adminReqPages = pagegenerators.CombinedPageGenerator(
-                            [adminReqPagesPrevYear, adminReqPagesCurrYear]) 
+    [adminReqPagesPrevYear, adminReqPagesCurrYear]) 
 
 adminReqPagesRecent = pagegenerators.EdittimeFilterPageGenerator(
-                            adminReqPages,
-                            last_edit_start=lastDateTime)
+    adminReqPages,
+    last_edit_start=lastDateTime)
 
 revisionCount = 0
 for reqPage in adminReqPagesRecent:
@@ -69,9 +69,9 @@ for reqPage in adminReqPagesRecent:
         if revision._parent_id:
             try:
                 diff = difflib.unified_diff(
-                            reqPage.getOldVersion(revision._parent_id).splitlines(),
-                            revision.text.splitlines(),
-                            n=0)
+                    reqPage.getOldVersion(revision._parent_id).splitlines(),
+                    revision.text.splitlines(),
+                    n=0)
                 # We don't need the diff headers, so iterate with .next() twice over them.
                 # However, if the edit has been empty (e.g. changed only the protection level),
                 # a StopIteration exception will be raised that we need to catch properly.
@@ -103,3 +103,5 @@ if revisionCount:
 f = open(fname_lastDateTime, 'wb')
 pickle.dump(currentDateTime, f)
 f.close()
+
+# vim:set ts=4 sts=4 sw=4 et:
