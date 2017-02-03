@@ -29,7 +29,7 @@ lastDateTime = pickle.load(f)
 f.close()
 
 mySite = pywikibot.Site()
-myTemplate = u'Шаблон:Портал Македония'
+generatorKey = u'Категория:Портал:Македония/Тематични статии'
 countPage = pywikibot.Page(mySite, u'Уикипедия:Македония/Брояч')
 datePage = pywikibot.Page(mySite, u'Уикипедия:Македония/Брояч/Дата')
 diffPage = pywikibot.Page(mySite, u'Уикипедия:Македония/Брояч/Промени')
@@ -38,8 +38,7 @@ locale.setlocale(locale.LC_TIME, 'bg_BG.UTF-8')
 currentDateTime = datetime.datetime.now().strftime('%H:%M на %e %B %Y').lower()
 locale.resetlocale(locale.LC_TIME)
 
-referringPages = pagegenerators.ReferringPageGenerator(pywikibot.Page(mySite, myTemplate), onlyTemplateInclusion = True)
-referringPages = pagegenerators.NamespaceFilterPageGenerator(referringPages, [0])
+referringPages = pagegenerators.CategorizedPageGenerator(pywikibot.Category(mySite, generatorKey), recurse = True, namespaces = [0])
 
 pageTitles=set()
 count = 0
