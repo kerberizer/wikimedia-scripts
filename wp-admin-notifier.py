@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8  -*-
 
 # wikimedia-scripts - scripts driving the Kerberizer bot on Wikimedia
 #
@@ -30,8 +29,8 @@ currentDateTime = datetime.datetime.utcnow()
 
 mailFrom = 'WikiBG Admin Notifier <admin-notifier@wikimedia.bg>'
 mailRcpt = 'admin-notify@wikimedia.bg'
-mailSubj = u'Промени в "Заявки към администраторите"'
-mailBody = u''
+mailSubj = 'Промени в "Заявки към администраторите"'
+mailBody = ''
 
 mail = MIMEMultipart('alternative')
 mail.set_charset('utf-8')
@@ -40,13 +39,13 @@ mail['To'] = mailRcpt
 mail['Subject'] = Header(mailSubj.encode('utf-8'), 'utf-8')
 
 adminReqPagesPrevYear = pagegenerators.PrefixingPageGenerator(
-    u'Заявки към администраторите/' + str(currentDateTime.year - 1),
-    namespace=u'Уикипедия',
+    'Заявки към администраторите/' + str(currentDateTime.year - 1),
+    namespace='Уикипедия',
     includeredirects=False)
 
 adminReqPagesCurrYear = pagegenerators.PrefixingPageGenerator(
-    u'Заявки към администраторите/' + str(currentDateTime.year),
-    namespace=u'Уикипедия',
+    'Заявки към администраторите/' + str(currentDateTime.year),
+    namespace='Уикипедия',
     includeredirects=False)
 
 adminReqPages = pagegenerators.CombinedPageGenerator(
@@ -59,13 +58,13 @@ adminReqPagesRecent = pagegenerators.EdittimeFilterPageGenerator(
 revisionCount = 0
 for reqPage in adminReqPagesRecent:
     mailBody += '##############################################################################\n\n'
-    mailBody += u'https://bg.wikipedia.org/wiki/' + reqPage.title().replace(' ', '_') + '\n\n'
+    mailBody += 'https://bg.wikipedia.org/wiki/' + reqPage.title().replace(' ', '_') + '\n\n'
     mailBody += '##############################################################################\n\n'
     for revision in reqPage.revisions(reverse=True, starttime=lastDateTime, content=True):
         revisionCount += 1
-        mailBody += u'Дата и час: %s' % revision.timestamp + '\n'
-        mailBody += u'Потребител: %s' % revision.user + '\n'
-        mailBody += u'Резюме: %s' % revision.comment + '\n\n'
+        mailBody += 'Дата и час: %s' % revision.timestamp + '\n'
+        mailBody += 'Потребител: %s' % revision.user + '\n'
+        mailBody += 'Резюме: %s' % revision.comment + '\n\n'
         if revision._parent_id:
             try:
                 diff = difflib.unified_diff(
@@ -81,18 +80,18 @@ for reqPage in adminReqPagesRecent:
                     for line in diff:
                         mailBody += line + '\n'
                 except StopIteration:
-                    mailBody += u'НЯМА РАЗЛИКА (ПРОМЯНА НА ЗАЩИТАТА И Т.Н.)\n'
+                    mailBody += 'НЯМА РАЗЛИКА (ПРОМЯНА НА ЗАЩИТАТА И Т.Н.)\n'
             except AttributeError:
-                mailBody += u'СКРИТ ТЕКСТ НА РЕДАКЦИЯ\n'
+                mailBody += 'СКРИТ ТЕКСТ НА РЕДАКЦИЯ\n'
         else:
             try:
                 mailBody += revision.text + '\n'
             except AttributeError:
-                mailBody += u'СКРИТ ТЕКСТ НА РЕДАКЦИЯ\n'
+                mailBody += 'СКРИТ ТЕКСТ НА РЕДАКЦИЯ\n'
         mailBody += '\n- - - 8< - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n\n'
 
 if revisionCount:
-    mailBody = u'НОВИ РЕДАКЦИИ: %i\n\n' % revisionCount + mailBody + u'КРАЙ НА СЪОБЩЕНИЕТО\n'
+    mailBody = 'НОВИ РЕДАКЦИИ: %i\n\n' % revisionCount + mailBody + 'КРАЙ НА СЪОБЩЕНИЕТО\n'
 
     mail.attach(MIMEText(mailBody.encode('utf-8'), 'plain', 'utf-8'))
 

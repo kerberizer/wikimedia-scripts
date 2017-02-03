@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8  -*-
 
 # wikimedia-scripts - scripts driving the Kerberizer bot on Wikimedia
 #
@@ -29,10 +28,10 @@ lastDateTime = pickle.load(f)
 f.close()
 
 mySite = pywikibot.Site()
-generatorKey = u'Категория:Портал:Македония/Тематични статии'
-countPage = pywikibot.Page(mySite, u'Уикипедия:Македония/Брояч')
-datePage = pywikibot.Page(mySite, u'Уикипедия:Македония/Брояч/Дата')
-diffPage = pywikibot.Page(mySite, u'Уикипедия:Македония/Брояч/Промени')
+generatorKey = 'Категория:Портал:Македония/Тематични статии'
+countPage = pywikibot.Page(mySite, 'Уикипедия:Македония/Брояч')
+datePage = pywikibot.Page(mySite, 'Уикипедия:Македония/Брояч/Дата')
+diffPage = pywikibot.Page(mySite, 'Уикипедия:Македония/Брояч/Промени')
 
 locale.setlocale(locale.LC_TIME, 'bg_BG.UTF-8')
 currentDateTime = datetime.datetime.now().strftime('%H:%M на %e %B %Y').lower()
@@ -58,25 +57,25 @@ if addedTitles or removedTitles:
     pickle.dump(pageTitles, f)
     f.close()
 
-    listDiff = u'__NOEDITSECTION__\n'
-    listDiff += u'{|\n|<code>' + lastDateTime + '</code>\n|-\n'
-    listDiff += u'| align="center" | <big>\'\'\'↓\'\'\'</big>\n'
-    listDiff += u'|-\n|<code>' + currentDateTime + '</code>\n|}\n'
-    listDiff += u'\n== Добавени ==\n'
+    listDiff = '__NOEDITSECTION__\n'
+    listDiff += '{|\n|<code>' + lastDateTime + '</code>\n|-\n'
+    listDiff += '| align="center" | <big>\'\'\'↓\'\'\'</big>\n'
+    listDiff += '|-\n|<code>' + currentDateTime + '</code>\n|}\n'
+    listDiff += '\n== Добавени ==\n'
 
     for article in addedTitles:
-        listDiff += u'* {{статия|' + article + '}}\n'
+        listDiff += '* {{статия|' + article + '}}\n'
 
-    listDiff += u'\n== Премахнати ==\n'
+    listDiff += '\n== Премахнати ==\n'
 
     for article in removedTitles:
-        listDiff += u'* {{статия|' + article + '}}\n'
+        listDiff += '* {{статия|' + article + '}}\n'
 
     countPage.text = str(count)
     datePage.text = currentDateTime
     diffPage.text = listDiff
-    countPage.save(u'Бот: актуализация на брояча')
-    datePage.save(u'Бот: актуализация на датата')
-    diffPage.save(u'Бот: актуализация на промените')
+    countPage.save('Бот: актуализация на брояча')
+    datePage.save('Бот: актуализация на датата')
+    diffPage.save('Бот: актуализация на промените')
 
 # vim:set ts=4 sts=4 sw=4 et:

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8  -*-
 
 # wikimedia-scripts - scripts driving the Kerberizer bot on Wikimedia
 #
@@ -16,16 +15,16 @@
 
 import pywikibot
 
-villagePumpTitle = u'Уикипедия:Разговори'
-textToClean = u'<!-- ВЪВЕДЕТЕ СЪОБЩЕНИЕТО СИ НАД ТОЗИ РЕД! НЕ ПИШЕТЕ ПОД НЕГО! НЕ ГО ИЗТРИВАЙТЕ! -->'
+villagePumpTitle = 'Уикипедия:Разговори'
+textToClean = '<!-- ВЪВЕДЕТЕ СЪОБЩЕНИЕТО СИ НАД ТОЗИ РЕД! НЕ ПИШЕТЕ ПОД НЕГО! НЕ ГО ИЗТРИВАЙТЕ! -->'
 
 myWikiSite = pywikibot.Site()
 villagePumpPage = pywikibot.Page(myWikiSite, villagePumpTitle)
 
 villagePumpOrigText = villagePumpPage.text
-villagePumpPage.text = villagePumpPage.text.replace(textToClean, u'')
+villagePumpPage.text = villagePumpPage.text.replace(textToClean, '')
 
 if not villagePumpPage.text == villagePumpOrigText:
-    villagePumpPage.save(u'Бот: премахване на излишни HTML коментари', force=True)
+    villagePumpPage.save('Бот: премахване на излишни HTML коментари', force=True)
 
 # vim:set ts=4 sts=4 sw=4 et:
