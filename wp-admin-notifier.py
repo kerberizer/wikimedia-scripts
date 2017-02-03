@@ -2,7 +2,7 @@
 
 # wikimedia-scripts - scripts driving the Kerberizer bot on Wikimedia
 #
-# Written in 2011-2016 by Luchesar V. ILIEV <luchesar.iliev@gmail.com>
+# Written in 2011-2017 by Luchesar V. ILIEV <luchesar.iliev@gmail.com>
 #
 # To the extent possible under law, the author(s) have dedicated all
 # copyright and related and neighboring rights to this software to the
