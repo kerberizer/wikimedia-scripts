@@ -9,10 +9,12 @@ import pywikibot as pwb
 
 
 def main(argv):
-    wik = pwb.Site(code='bg', fam='wikipedia')
     prefix = 'Инкубатор/Статии/'
-    print('Getting the list of articles...')
-    lop = []
+    wik = pwb.Site(code='bg', fam='wikipedia')
+    list_page = pwb.Page(wik, 'Уикипедия:Инкубатор/Списък на статиите')
+    list_page_content = []
+    list_of_articles = []
+
     for page in wik.allpages(prefix=prefix, namespace=4):
         since = None
         for rev in page.revisions():
@@ -25,27 +27,33 @@ def main(argv):
                 break
         if not since:
             since = page.oldest_revision.timestamp
-        lop.append((page.title(), since, page.isRedirectPage()))
-    lop.sort(key=lambda x: x[1])
-    print('{{Уикипедия:Инкубатор/Списък на статиите/Header}}')
-    print('{| class="wikitable sortable"')
-    print('! Статия !! Влязла в инкубатора')
-    for page in lop:
+        list_of_articles.append((page.title(), since, page.isRedirectPage()))
+    list_of_articles.sort(key=lambda x: x[1])
+    list_page_content = [
+        '{{Уикипедия:Инкубатор/Списък на статиите/Header}}',
+        '{| class="wikitable sortable"',
+        '! Статия !! Влязла в инкубатора',
+        ]
+    for page in list_of_articles:
         # page[1] is the timestamp of the article either being created in or moved to the Incubator.
         if dt.datetime.utcnow() - page[1] > dt.timedelta(days=120):
-            print('|- style="background-color: red;"')
+            list_page_content.append('|- style="background-color: red;"')
         elif dt.datetime.utcnow() - page[1] > dt.timedelta(days=90):
-            print('|- style="background-color: gold;"')
+            list_page_content.append('|- style="background-color: gold;"')
         # page[2] is the boolean from page.isRedirectPage().
         elif page[2]:
-            print('|- style="background-color: magenta;"')
+            list_page_content.append('|- style="background-color: magenta;"')
         else:
-            print('|-')
-        print('| {link} || {timestamp}'.format(
+            list_page_content.append('|-')
+        list_page_content.append('| {link} || {timestamp}'.format(
             link='[[' + page[0] + '|' + page[0].rsplit('/', 1)[1] + ']]',
             timestamp=str(page[1])))
-    print('|-')
-    print('|}')
+    list_page_content.extend([
+        '|-',
+        '|}',
+        ])
+    list_page.text = '\n'.join(list_page_content)
+    list_page.save(summary='Бот: актуализация на списъка', quiet=True)
 
 
 if __name__ == '__main__':
