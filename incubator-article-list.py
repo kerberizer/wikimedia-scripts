@@ -18,7 +18,8 @@ def main(argv):
         for rev in page.revisions():
             if rev['timestamp'] < dt.datetime.utcnow()-dt.timedelta(days=360):
                 break
-            if re.match(r'.+ премести страница(та)? „\[\[.+?\]]“ като „\[\[Уикипедия:Инкубатор/Статии',
+            if re.match(
+                    r'.+ премести страница(та)? „\[\[.+?\]]“ като „\[\[Уикипедия:Инкубатор/Статии',
                     rev['comment']):
                 since = rev['timestamp']
                 break
