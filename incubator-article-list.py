@@ -27,7 +27,7 @@ def main(argv):
             since = page.oldest_revision.timestamp
         lop.append((page.title(), since, page.isRedirectPage()))
     lop.sort(key=lambda x: x[1])
-    print('{{/Header}}')
+    print('{{Уикипедия:Инкубатор/Списък на статиите/Header}}')
     print('{| class="wikitable sortable"')
     print('! Статия !! Влязла в инкубатора')
     for page in lop:
