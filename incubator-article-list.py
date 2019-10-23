@@ -31,10 +31,14 @@ def main(argv):
     print('{| class="wikitable sortable"')
     print('! Статия !! Влязла в инкубатора')
     for page in lop:
-        if dt.datetime.utcnow() - page[1] > dt.timedelta(days=90):
-            print('|- style="background-color: gold;"')
-        elif page[2]:
+        # page[1] is the timestamp of the article either being created in or moved to the Incubator.
+        if dt.datetime.utcnow() - page[1] > dt.timedelta(days=120):
             print('|- style="background-color: red;"')
+        elif dt.datetime.utcnow() - page[1] > dt.timedelta(days=90):
+            print('|- style="background-color: gold;"')
+        # page[2] is the boolean from page.isRedirectPage().
+        elif page[2]:
+            print('|- style="background-color: magenta;"')
         else:
             print('|-')
         print('| {link} || {timestamp}'.format(
