@@ -29,7 +29,7 @@ def main(argv):
     site_index = ''
     for site in site_list:
         if site[0] != site_index:
-            list_page.text += '\n=== {} ===\n'.format(site[0].capitalize())
+            list_page.text += '\n<h3> {} </h3>\n'.format(site[0].capitalize())
             site_index = site[0]
         list_page.text += '* {}\n'.format(site)
     list_page.text += '\n{{' + list_page_name + '/F}}'
