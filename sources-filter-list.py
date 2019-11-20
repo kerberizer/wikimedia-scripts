@@ -25,34 +25,14 @@ def main(argv):
             ).submit()['query']['abusefilters'][0]['pattern']
     site_list = [_[3:][:-4].replace('\\.', '.') for _ in pattern.splitlines() if _[0:3] == "'\\b"]
     site_list.sort()
-    style = ';'.join([
-            '-webkit-column-width: 20em',
-            '-moz-column-width: 20em',
-            'column-width: 20em',
-            'font-family: monospace',
-            'font-size: small',
-            ])
-    list_page.text = '\n'.join([
-        '__NOINDEX____NOTOC__',
-        '{{съкр|У:СФИН}}',
-        '<div class="hilite" style="text-align: center; margin-bottom: 1em;">',
-        'Автоматично генериран списък на сайтове от ' +
-        '[[Специални:Филтър срещу злоупотреби/12|ФИН]]. За повече информация, вижте [[У:ФИН]].',
-        '<br>',
-        '<big>Моля, не редактирайте страницата!</big>',
-        '<br>',
-        'За обсъждане на добавяне и изваждане на сайтове, моля използвайте ' +
-        '[[{{TALKPAGENAME}}|беседата]].',
-        '</div>',
-        '<div style="' + style + '">',
-        ])
+    list_page.text = '{{' + list_page_name + '/H}}\n'
     site_index = ''
     for site in site_list:
         if site[0] != site_index:
             list_page.text += '\n=== {} ===\n'.format(site[0].capitalize())
             site_index = site[0]
         list_page.text += '* {}\n'.format(site)
-    list_page.text += '</div>'
+    list_page.text += '\n{{' + list_page_name + '/F}}'
     lnum_page.text = str(len(site_list))
     list_page.save(summary='Бот: актуализация', quiet=True)
     lnum_page.save(summary='Бот: актуализация', quiet=True)
