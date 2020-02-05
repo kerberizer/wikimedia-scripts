@@ -38,7 +38,7 @@ def main(argv):
         reviewer = ''
         # Check if the article is a redirect page (e.g. likely moved to main namespace).
         if article.isRedirectPage():
-            timestamp_entered = dt.datetime(year=1, month=1, day=1)
+            timestamp_entered = '0000-00-00T00:00:00Z'
             status = 'redirect'
         else:
             # Parse the revision history to see if the article has been moved to the Incubator.
@@ -90,12 +90,12 @@ def main(argv):
         # Add an associative array for each article.
         list_of_articles.append({
             'fullname': article.title(),
-            'timestamp': timestamp_entered,
+            'timestamp': str(timestamp_entered).replace('T', ' '),
             'status': status,
             'reviewer': reviewer
             })
 
-    list_of_articles.sort(key=lambda x: x['timestamp'])
+    list_of_articles.sort(key=lambda _: _['timestamp'])
 
     # Populate the table of articles.
     for article in list_of_articles:
@@ -116,7 +116,7 @@ def main(argv):
                 list_page_content.append('|-')
             link = '[[' + article['fullname'] + '|' + article_name + ']]'
         list_page_content.append('| {link} || {timestamp} || {reviewer}'.format(
-            link=link, timestamp=str(article['timestamp']), reviewer=article['reviewer']))
+            link=link, timestamp=article['timestamp'], reviewer=article['reviewer']))
 
     list_page_content.append('|-\n|}')
     list_page_content.append('<small>Време за последно изпълнение: {}</small>'.format(
