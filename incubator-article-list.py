@@ -66,17 +66,21 @@ def main(argv):
                 status = 'critical'
             elif days_ago_entered > dt.timedelta(days=days_warning):
                 status = 'warning'
-            # Check if the article has the {{в инкубатора}} template and, if not, add it.
-            # While at it, see also if a review is requested and if somebody is doing it.
+            # Check if the article has the {{в инкубатора}} template and, if not, add it. While at
+            # it, see also if a review is requested and if somebody is doing it. Finally, check if
+            # help is being requested. Status priority: critical > review > warning > help > normal.
             has_incubator_template = False
             for template in mwp.parse(article.text).filter_templates():
                 if template.name.matches('в инкубатора'):
                     has_incubator_template = True
                 elif template.name.matches('инкубатор-проверка'):
-                    if status in ('normal', 'warning'):
-                        status = 'in_review'
+                    if status in ('normal', 'help', 'warning'):
+                        status = 'review'
                     if template.params:
                         reviewer = template.get(1).value
+                elif template.name.matches('помощ'):
+                    if status in ('normal'):
+                        status = 'help'
             if not has_incubator_template:
                 try:
                     article.text = '{{в инкубатора}}\n' + article.text
@@ -104,7 +108,9 @@ def main(argv):
                 list_page_content.append('|- style="background-color: red;"')
             elif article['status'] == 'warning':
                 list_page_content.append('|- style="background-color: gold;"')
-            elif article['status'] == 'in_review':
+            elif article['status'] == 'review':
+                list_page_content.append('|- style="background-color: lightgreen;"')
+            elif article['status'] == 'help':
                 list_page_content.append('|- style="background-color: cyan;"')
             else:
                 list_page_content.append('|-')
