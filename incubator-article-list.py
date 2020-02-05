@@ -5,14 +5,17 @@ import sys
 
 import datetime as dt
 
+import mwparserfromhell as mwp
 import pywikibot as pwb
 
 
 def main(argv):
+    start_time = dt.datetime.utcnow()
     list_page_fullname = 'Уикипедия:Инкубатор/Списък на статиите'
     article_pageprefix = 'Инкубатор/Статии/'
     article_namespace = 'Уикипедия'
     days_search_for_move = 360
+    days_force_delete = 150
     days_critical = 120
     days_warning = 90
 
@@ -25,28 +28,67 @@ def main(argv):
     list_page_content = [
         '{{' + list_page_fullname + '/Header}}',
         '{| class="wikitable sortable"',
-        '! Статия !! Влязла в инкубатора',
+        '! Статия !! Влязла в инкубатора !! Проверяващ',
         ]
 
     list_of_articles = []
     for article in site.allpages(prefix=article_pageprefix, namespace=article_namespace):
-        timestamp_entered_incubator = None
-        # Parse the revision history to see if the article has been moved to the Incubator.
-        oldest_timestamp_to_check = dt.datetime.utcnow() - dt.timedelta(days=days_search_for_move)
-        for rev in article.revisions():
-            if rev['timestamp'] < oldest_timestamp_to_check:
-                break
-            if re_page_move.match(rev['comment']):
-                timestamp_entered_incubator = rev['timestamp']
-                break
-        # Article either created in Incubator or moved there earlier than days_search_for_move.
-        if not timestamp_entered_incubator:
-            timestamp_entered_incubator = article.oldest_revision.timestamp
+        timestamp_entered = None
+        status = 'normal'
+        reviewer = ''
+        # Check if the article is a redirect page (e.g. likely moved to main namespace).
+        if article.isRedirectPage():
+            timestamp_entered = dt.datetime(year=1, month=1, day=1)
+            status = 'redirect'
+        else:
+            # Parse the revision history to see if the article has been moved to the Incubator.
+            oldest_timestamp_to_check = start_time - dt.timedelta(days=days_search_for_move)
+            for rev in article.revisions():
+                if rev['timestamp'] < oldest_timestamp_to_check:
+                    break
+                if re_page_move.match(rev['comment']):
+                    timestamp_entered = rev['timestamp']
+                    break
+            # Article either created in Incubator or moved there earlier than days_search_for_move.
+            if not timestamp_entered:
+                timestamp_entered = article.oldest_revision.timestamp
+            # Calculate the age of the article in the Incubator and set the status or delete it.
+            days_ago_entered = start_time - timestamp_entered
+            if days_ago_entered > dt.timedelta(days=days_force_delete):
+                try:
+                    article.delete(reason='Автоматично изтриване: [[Уикипедия:Инкубатор/Регламент|'
+                                   + 'повече от 120 дни в инкубатора]]', prompt=False)
+                except pwb.data.api.APIError as e:
+                    print('APIError exception: {}'.format(str(e)), file=sys.stderr)
+                else:
+                    continue
+            elif days_ago_entered > dt.timedelta(days=days_critical):
+                status = 'critical'
+            elif days_ago_entered > dt.timedelta(days=days_warning):
+                status = 'warning'
+            # Check if the article has the {{в инкубатора}} template and, if not, add it.
+            # While at it, see also if a review is requested and if somebody is doing it.
+            has_incubator_template = False
+            for template in mwp.parse(article.text).filter_templates():
+                if template.name.matches('в инкубатора'):
+                    has_incubator_template = True
+                elif template.name.matches('инкубатор-проверка'):
+                    if status in ('normal', 'warning'):
+                        status = 'in_review'
+                    if template.params:
+                        reviewer = template.get(1).value
+            if not has_incubator_template:
+                try:
+                    article.text = '{{в инкубатора}}\n' + article.text
+                    article.save(summary='Бот: добавяне на {{в инкубатора}}', quiet=True)
+                except pwb.data.api.APIError as e:
+                    print('APIError exception: {}'.format(str(e)), file=sys.stderr)
         # Add an associative array for each article.
         list_of_articles.append({
             'fullname': article.title(),
-            'timestamp': timestamp_entered_incubator,
-            'is_redirect': article.isRedirectPage()
+            'timestamp': timestamp_entered,
+            'status': status,
+            'reviewer': reviewer
             })
 
     list_of_articles.sort(key=lambda x: x['timestamp'])
@@ -54,22 +96,25 @@ def main(argv):
     # Populate the table of articles.
     for article in list_of_articles:
         article_name = article['fullname'].rsplit('/', 1)[1]
-        days_ago_entered = dt.datetime.utcnow() - article['timestamp']
-        if article['is_redirect']:
+        if article['status'] == 'redirect':
             list_page_content.append('|- style="background-color: magenta;"')
             link = '{{без пренасочване|' + article['fullname'] + '|' + article_name + '}}'
         else:
-            if days_ago_entered > dt.timedelta(days=days_critical):
+            if article['status'] == 'critical':
                 list_page_content.append('|- style="background-color: red;"')
-            elif days_ago_entered > dt.timedelta(days=days_warning):
+            elif article['status'] == 'warning':
                 list_page_content.append('|- style="background-color: gold;"')
+            elif article['status'] == 'in_review':
+                list_page_content.append('|- style="background-color: cyan;"')
             else:
                 list_page_content.append('|-')
             link = '[[' + article['fullname'] + '|' + article_name + ']]'
-        list_page_content.append('| {link} || {timestamp}'.format(
-            link=link, timestamp=str(article['timestamp'])))
+        list_page_content.append('| {link} || {timestamp} || {reviewer}'.format(
+            link=link, timestamp=str(article['timestamp']), reviewer=article['reviewer']))
 
     list_page_content.append('|-\n|}')
+    list_page_content.append('<small>Време за последно изпълнение: {}</small>'.format(
+        dt.datetime.utcnow() - start_time))
     list_page.text = '\n'.join(list_page_content)
     list_page.save(summary='Бот: актуализация на списъка', quiet=True)
 
