@@ -119,8 +119,12 @@ def main(argv):
             link=link, timestamp=article['timestamp'], reviewer=article['reviewer']))
 
     list_page_content.append('|-\n|}')
-    list_page_content.append('<small>Време за последно изпълнение: {}</small>'.format(
+    list_page_content.append('{| style="font-size: small;"\n|-')
+    list_page_content.append('| Дата на последна актуализация: || {}'.format(start_time))
+    list_page_content.append('|-')
+    list_page_content.append('| Време за последно изпълнение: || {}'.format(
         dt.datetime.utcnow() - start_time))
+    list_page_content.append('|-\n|}')
     list_page.text = '\n'.join(list_page_content)
     list_page.save(summary='Бот: актуализация на списъка', quiet=True)
 
