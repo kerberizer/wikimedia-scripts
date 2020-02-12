@@ -27,8 +27,8 @@ def main(argv):
     list_page = pwb.Page(site, list_page_fullname)
     list_page_content = [
         '{{' + list_page_fullname + '/Header}}',
-        '{| class="wikitable sortable"',
-        '! Статия !! Влязла в инкубатора !! Проверяващ',
+        '{| class="wikitable sortable" style="font-size: small;"',
+        '! Статия !! Влязла ([[UTC]]) !! Автор !! Проверяващ',
         ]
 
     list_of_articles = []
@@ -66,6 +66,9 @@ def main(argv):
                 status = 'critical'
             elif days_ago_entered > dt.timedelta(days=days_warning):
                 status = 'warning'
+            # Determine the article author.
+            author = article.oldest_revision.user
+            author_link = '{{{{потребител|{}}}}}'.format(author)
             # Check if the article has the {{в инкубатора}} template and, if not, add it. While at
             # it, see also if a review is requested and if somebody is doing it. Finally, check if
             # help is being requested. Status priority: critical > review > warning > help > normal.
@@ -90,8 +93,9 @@ def main(argv):
         # Add an associative array for each article.
         list_of_articles.append({
             'fullname': article.title(),
-            'timestamp': str(timestamp_entered).replace('T', ' '),
+            'timestamp': str(timestamp_entered).replace('T', ' ')[:-1],
             'status': status,
+            'author': author_link,
             'reviewer': reviewer
             })
 
@@ -115,8 +119,9 @@ def main(argv):
             else:
                 list_page_content.append('|-')
             link = '[[' + article['fullname'] + '|' + article_name + ']]'
-        list_page_content.append('| {link} || {timestamp} || {reviewer}'.format(
-            link=link, timestamp=article['timestamp'], reviewer=article['reviewer']))
+        list_page_content.append('| {link} || {timestamp} || {author} || {reviewer}'.format(
+            link=link, timestamp=article['timestamp'], author=article['author'],
+            reviewer=article['reviewer']))
 
     list_page_content.append('|-\n|}')
     list_page.text = '\n'.join(list_page_content)
