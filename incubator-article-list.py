@@ -90,6 +90,8 @@ def main(argv):
                     article.save(summary='Бот: добавяне на {{в инкубатора}}', quiet=True)
                 except pwb.data.api.APIError as e:
                     print('APIError exception: {}'.format(str(e)), file=sys.stderr)
+                except pwb.exceptions.LockedPage as e:
+                    print('WARNING: Locked page: {}'.format(str(e)), file=sys.stderr)
         # Add an associative array for each article.
         list_of_articles.append({
             'fullname': article.title(),
