@@ -27,7 +27,7 @@ def main(argv):
     list_page = pwb.Page(site, list_page_fullname)
     list_page_content = [
         '{{' + list_page_fullname + '/Header}}',
-        '{| class="wikitable sortable" style="font-size: small;"',
+        '{| class="wikitable sortable plainlinks" style="font-size: small;"',
         '! Статия !! Влязла ([[UTC]]) !! Автор !! Проверяващ',
         ]
 
@@ -118,9 +118,20 @@ def main(argv):
                 list_page_content.append('|- style="background-color: cyan;"')
             else:
                 list_page_content.append('|-')
-            link = '[[' + article['fullname'] + '|' + article_name + ']]'
+            link = [
+                    '[[',
+                    article['fullname'],
+                    '|',
+                    article_name,
+                    ']]',
+                    ' ([[{{TALKPAGENAME:',
+                    article['fullname'],
+                    '}}|беседа]] - [{{fullurl:',
+                    article['fullname'],
+                    '|action=history}} история])',
+                    ]
         list_page_content.append('| {link} || {timestamp} || {author} || {reviewer}'.format(
-            link=link, timestamp=article['timestamp'], author=article['author'],
+            link=''.join(link), timestamp=article['timestamp'], author=article['author'],
             reviewer=article['reviewer']))
 
     list_page_content.append('|-\n|}')
