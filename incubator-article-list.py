@@ -12,16 +12,16 @@ from pywikibot.exceptions import APIError
 
 
 BOT_ID = '[[Потребител:Eliza Beth|Бот]]'
+BOT_ID_REGEX = BOT_ID.replace('[', r'\[').replace(']', r'\]')
 
 
 def is_proposed_for_deletion(article):
-    bot_id_regex = BOT_ID.replace('[', r'\[').replace(']', r'\]')
-    return re.search(r'{{delete|1={bot_id}:'.format(bot_id=bot_id_regex), article.text, flags=re.I)
+    return re.search(r'{{delete|1={bot_id}:'.format(bot_id=BOT_ID_REGEX), article.text, flags=re.I)
 
 
 def delete(site, article_name, reason):
     article = pwb.Page(site, article_name)
-    if not is_proposed_for_deletion(article):
+    if not is_proposed_for_deletion(article) and article.exists():
         try:
             article.delete(reason='{bot_id}: {reason}'.format(bot_id=BOT_ID, reason=reason),
                            prompt=False, mark=True)
@@ -35,13 +35,14 @@ def main(argv):
     article_pageprefix = 'Инкубатор/Статии/'
     article_namespace = 'Уикипедия'
     days_search_for_move = 360
-    days_force_delete = 127
+    days_force_delete = 150
     days_critical = 120
     days_warning = 90
 
     article_fullprefix = article_namespace + ':' + article_pageprefix
     re_page_move = re.compile(
             r'.+ премести страница(та)? „\[\[.+?\]]“ като „\[\[' + article_fullprefix)
+    re_broken_redirect = re.compile(r'\n#(?:пренасочване|redirect)\s*\[\[', flags=re.I)
 
     site = pwb.Site(code='bg', fam='wikipedia')
     list_page = pwb.Page(site, list_page_fullname)
@@ -56,8 +57,11 @@ def main(argv):
         timestamp_entered = None
         status = 'normal'
         reviewer = ''
+        # Determine the article author.
+        author = article.oldest_revision.user
+        author_link = '{{{{потребител|{}}}}}'.format(author)
         # Check if the article is a redirect page (e.g. likely moved to main namespace).
-        if article.isRedirectPage():
+        if article.isRedirectPage() or re_broken_redirect.search(article.text):
             timestamp_entered = '0000-00-00T00:00:00Z'
             status = 'redirect'
         else:
@@ -80,9 +84,6 @@ def main(argv):
                 status = 'critical'
             elif days_ago_entered > dt.timedelta(days=days_warning):
                 status = 'warning'
-            # Determine the article author.
-            author = article.oldest_revision.user
-            author_link = '{{{{потребител|{}}}}}'.format(author)
             # Check if the article has the {{в инкубатора}} template and, if not, add it. While at
             # it, see also if a review is requested and if somebody is doing it. Finally, check if
             # help is being requested. Status priority: critical > review > warning > help > normal.
@@ -127,8 +128,8 @@ def main(argv):
             link = '{{без пренасочване|' + article['fullname'] + '|' + article_name + '}}'
         else:
             if article['status'] == 'delete':
-                delete(site, article['fullname'],
-                       '[[Уикипедия:Инкубатор/Регламент|повече от 120 дни в инкубатора]]')
+                delete(site, article['fullname'], '[[Уикипедия:Инкубатор/Регламент|повече от'
+                       + '{days} дни в инкубатора]]'.format(days=days_force_delete))
                 list_page_content.append('|- style="background-color: #ff6666;"')
             elif article['status'] == 'critical':
                 list_page_content.append('|- style="background-color: #ffb366;"')
