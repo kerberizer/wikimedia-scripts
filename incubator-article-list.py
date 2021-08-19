@@ -11,13 +11,31 @@ import pywikibot as pwb
 from pywikibot.exceptions import APIError
 
 
+BOT_ID = '[[Потребител:Eliza Beth|Бот]]'
+
+
+def is_proposed_for_deletion(article):
+    bot_id_regex = BOT_ID.replace('[', r'\[').replace(']', r'\]')
+    return re.search(r'{{delete|1={bot_id}:'.format(bot_id=bot_id_regex), article.text, flags=re.I)
+
+
+def delete(site, article_name, reason):
+    article = pwb.Page(site, article_name)
+    if not is_proposed_for_deletion(article):
+        try:
+            article.delete(reason='{bot_id}: {reason}'.format(bot_id=BOT_ID, reason=reason),
+                           prompt=False, mark=True)
+        except APIError as e:
+            print('APIError exception: {}'.format(str(e)), file=sys.stderr)
+
+
 def main(argv):
     start_time = dt.datetime.utcnow()
     list_page_fullname = 'Уикипедия:Инкубатор/Списък на статиите'
     article_pageprefix = 'Инкубатор/Статии/'
     article_namespace = 'Уикипедия'
     days_search_for_move = 360
-    days_force_delete = 150
+    days_force_delete = 127
     days_critical = 120
     days_warning = 90
 
@@ -57,13 +75,7 @@ def main(argv):
             # Calculate the age of the article in the Incubator and set the status or delete it.
             days_ago_entered = start_time - timestamp_entered
             if days_ago_entered > dt.timedelta(days=days_force_delete):
-                try:
-                    article.delete(reason='Автоматично изтриване: [[Уикипедия:Инкубатор/Регламент|'
-                                   + 'повече от 120 дни в инкубатора]]', prompt=False, mark=True)
-                except APIError as e:
-                    print('APIError exception: {}'.format(str(e)), file=sys.stderr)
-                else:
-                    continue
+                status = 'delete'
             elif days_ago_entered > dt.timedelta(days=days_critical):
                 status = 'critical'
             elif days_ago_entered > dt.timedelta(days=days_warning):
@@ -109,17 +121,23 @@ def main(argv):
     for article in list_of_articles:
         article_name = article['fullname'].rsplit('/', 1)[1]
         if article['status'] == 'redirect':
-            list_page_content.append('|- style="background-color: magenta;"')
+            delete(site, article['fullname'],
+                   'Излишен остатък след преместване от [[Уикипедия:Инкубатор]]')
+            list_page_content.append('|- style="background-color: #ff66ff;"')
             link = '{{без пренасочване|' + article['fullname'] + '|' + article_name + '}}'
         else:
-            if article['status'] == 'critical':
-                list_page_content.append('|- style="background-color: red;"')
+            if article['status'] == 'delete':
+                delete(site, article['fullname'],
+                       '[[Уикипедия:Инкубатор/Регламент|повече от 120 дни в инкубатора]]')
+                list_page_content.append('|- style="background-color: #ff6666;"')
+            elif article['status'] == 'critical':
+                list_page_content.append('|- style="background-color: #ffb366;"')
             elif article['status'] == 'warning':
-                list_page_content.append('|- style="background-color: gold;"')
+                list_page_content.append('|- style="background-color: #ffff66;"')
             elif article['status'] == 'review':
-                list_page_content.append('|- style="background-color: lightgreen;"')
+                list_page_content.append('|- style="background-color: #66ff66;"')
             elif article['status'] == 'help':
-                list_page_content.append('|- style="background-color: cyan;"')
+                list_page_content.append('|- style="background-color: #66ffff;"')
             else:
                 list_page_content.append('|-')
             link = [
