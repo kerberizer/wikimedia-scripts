@@ -8,6 +8,8 @@ import datetime as dt
 import mwparserfromhell as mwp
 import pywikibot as pwb
 
+from pywikibot.exceptions import APIError
+
 
 def main(argv):
     start_time = dt.datetime.utcnow()
@@ -58,7 +60,7 @@ def main(argv):
                 try:
                     article.delete(reason='Автоматично изтриване: [[Уикипедия:Инкубатор/Регламент|'
                                    + 'повече от 120 дни в инкубатора]]', prompt=False)
-                except pwb.data.api.APIError as e:
+                except APIError as e:
                     print('APIError exception: {}'.format(str(e)), file=sys.stderr)
                 else:
                     continue
@@ -88,7 +90,7 @@ def main(argv):
                 try:
                     article.text = '{{в инкубатора}}\n' + article.text
                     article.save(summary='Бот: добавяне на {{в инкубатора}}', quiet=True)
-                except pwb.data.api.APIError as e:
+                except APIError as e:
                     print('APIError exception: {}'.format(str(e)), file=sys.stderr)
                 except pwb.exceptions.LockedPage as e:
                     print('WARNING: Locked page: {}'.format(str(e)), file=sys.stderr)
