@@ -59,7 +59,7 @@ def main(argv):
             if days_ago_entered > dt.timedelta(days=days_force_delete):
                 try:
                     article.delete(reason='Автоматично изтриване: [[Уикипедия:Инкубатор/Регламент|'
-                                   + 'повече от 120 дни в инкубатора]]', prompt=False)
+                                   + 'повече от 120 дни в инкубатора]]', prompt=False, mark=True)
                 except APIError as e:
                     print('APIError exception: {}'.format(str(e)), file=sys.stderr)
                 else:
