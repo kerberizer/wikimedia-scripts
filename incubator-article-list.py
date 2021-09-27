@@ -128,7 +128,7 @@ def main(argv):
             link = '{{без пренасочване|' + article['fullname'] + '|' + article_name + '}}'
         else:
             if article['status'] == 'delete':
-                delete(site, article['fullname'], '[[Уикипедия:Инкубатор/Регламент|повече от'
+                delete(site, article['fullname'], '[[Уикипедия:Инкубатор/Регламент|повече от '
                        + '{days} дни в инкубатора]]'.format(days=days_force_delete))
                 list_page_content.append('|- style="background-color: #ff6666;"')
             elif article['status'] == 'critical':
