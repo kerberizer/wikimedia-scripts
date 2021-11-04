@@ -11,12 +11,8 @@ import pywikibot as pwb
 from pywikibot.exceptions import APIError
 
 
-BOT_ID = '[[Потребител:Eliza Beth|Бот]]'
-BOT_ID_REGEX = BOT_ID.replace('[', r'\[').replace(']', r'\]')
-
-
 def is_proposed_for_deletion(article):
-    return re.search(r'{{delete|1={bot_id}:'.format(bot_id=BOT_ID_REGEX), article.text, flags=re.I)
+    return re.search(r'{{delete|1=Бот:', article.text, flags=re.I)
 
 
 def delete(site, article_name, reason):
