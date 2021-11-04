@@ -23,8 +23,7 @@ def delete(site, article_name, reason):
     article = pwb.Page(site, article_name)
     if not is_proposed_for_deletion(article) and article.exists():
         try:
-            article.delete(reason='{bot_id}: {reason}'.format(bot_id=BOT_ID, reason=reason),
-                           prompt=False, mark=True)
+            article.delete(reason=f'Бот: {reason}', prompt=False, mark=True)
         except APIError as e:
             print('APIError exception: {}'.format(str(e)), file=sys.stderr)
 
