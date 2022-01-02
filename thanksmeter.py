@@ -24,10 +24,16 @@ class ThanksMeter:
                 thanks['s'][thank.user()] += 1
             except KeyError:
                 thanks['s'][thank.user()] = 1
+        return self._sort_user_thanks(thanks)
 
+    def _sort_user_thanks(self, user_thanks_dict):
+        presort = dict(
+                r=dict(sorted(user_thanks_dict['r'].items())),
+                s=dict(sorted(user_thanks_dict['s'].items()))
+                )
         return dict(
-                r=dict(sorted(thanks['r'].items(), key=lambda _: _[1], reverse=True)),
-                s=dict(sorted(thanks['s'].items(), key=lambda _: _[1], reverse=True))
+                r=dict(sorted(presort['r'].items(), key=lambda _: _[1], reverse=True)),
+                s=dict(sorted(presort['s'].items(), key=lambda _: _[1], reverse=True))
                 )
 
     def _draw_table(self, user_thanks_dict, title):
@@ -63,14 +69,16 @@ class ThanksMeter:
 def main():
     thanksmeter = ThanksMeter()
     thanksmeter.init_page()
-    since = dt.utcnow() - rd(days=1)
-    thanksmeter.draw_tables_since(since, 'За последния ден')
-    since = dt.utcnow() - rd(weeks=1)
-    thanksmeter.draw_tables_since(since, 'За последната седмица')
-    since = dt.utcnow() - rd(months=1)
-    thanksmeter.draw_tables_since(since, 'За последния месец')
-    since = dt.utcnow() - rd(months=3)
-    thanksmeter.draw_tables_since(since, 'За последните три месеца')
+    thanksmeter.draw_tables_since(
+            dt.utcnow() - rd(days=1), 'За последния ден')
+    thanksmeter.draw_tables_since(
+            dt.utcnow() - rd(weeks=1), 'За последната седмица')
+    thanksmeter.draw_tables_since(
+            dt.utcnow() - rd(months=1), 'За последния месец')
+    thanksmeter.draw_tables_since(
+            dt.utcnow() - rd(months=3), 'За последните три месеца')
+    thanksmeter.draw_tables_since(
+            dt.utcnow() - rd(years=1), 'За последната година')
     thanksmeter.save_page()
 
 
