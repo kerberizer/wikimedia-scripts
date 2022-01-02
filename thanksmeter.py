@@ -38,8 +38,11 @@ class ThanksMeter:
             self._page.text += f'| [[Потребител:{user}|{user}]] || {thanks}\n|-\n'
         self._page.text += '|}\n'
 
-    def clear_page(self):
-        self._page.text = ''
+    def init_page(self):
+        script_url = 'https://github.com/kerberizer/wikimedia-scripts/blob/master/thanksmeter.py'
+        self._page.text = '\'\'Тази страница е генерирана автоматично в {{subst:CURRENTTIME}} на '
+        self._page.text += '{{subst:CURRENTDAY}} {{subst:CURRENTMONTHNAME}} {{subst:CURRENTYEAR}} '
+        self._page.text += f'от [{script_url} скрипт].\'\'\n'
 
     def save_page(self):
         try:
@@ -59,7 +62,7 @@ class ThanksMeter:
 
 def main():
     thanksmeter = ThanksMeter()
-    thanksmeter.clear_page()
+    thanksmeter.init_page()
     since = dt.utcnow() - rd(days=1)
     thanksmeter.draw_tables_since(since, 'За последния ден')
     since = dt.utcnow() - rd(weeks=1)
