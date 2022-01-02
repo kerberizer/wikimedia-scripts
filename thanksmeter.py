@@ -54,9 +54,9 @@ class ThanksMeter:
         thanks = self._get_thanks_since(date)
         self._page.text += f'== {title} ==\n'
         self._page.text += '<div style="float: left;">\n'
-        self._draw_table(thanks['r'], 'Получени благодарности')
+        self._draw_table(thanks['r'], 'Получени благодарности')
         self._page.text += '</div><div style="float: left;">\n'
-        self._draw_table(thanks['s'], 'Изпратени благодарности')
+        self._draw_table(thanks['s'], 'Изпратени благодарности')
         self._page.text += '</div>{{br}}\n'
 
 
