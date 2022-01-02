@@ -48,7 +48,7 @@ class ThanksMeter:
         script_url = 'https://github.com/kerberizer/wikimedia-scripts/blob/master/thanksmeter.py'
         self._page.text = f"''Тази страница е генерирана автоматично от [{script_url} скрипт] в "
         self._page.text += "'''{{subst:CURRENTTIME}}''' [[UTC]] на '''{{subst:CURRENTDAY}} "
-        self._page.text += "{{subst:CURRENTMONTHNAME}} {{subst:CURRENTYEAR}}'''.''\n"
+        self._page.text += "{{subst:CURRENTMONTHNAME}} {{subst:CURRENTYEAR}}''' г.''\n"
 
     def save_page(self):
         try:
