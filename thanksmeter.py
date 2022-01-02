@@ -13,9 +13,9 @@ class ThanksMeter:
         self._site = Site('bg', fam='wikipedia')
         self._page = Page(self._site, 'Потребител:Iliev/Мерсиметър')
 
-    def _get_thanks_since(self, date):
+    def _get_thanks(self, since_datetime):
         thanks = dict(r=dict(), s=dict())
-        for thank in self._site.logevents(logtype='thanks', end=date):
+        for thank in self._site.logevents(logtype='thanks', end=since_datetime):
             try:
                 thanks['r'][thank.page().title(with_ns=False)] += 1
             except KeyError:
@@ -56,9 +56,9 @@ class ThanksMeter:
         except APIError as e:
             print('ERROR: Cannot save page: APIError: ' + str(e))
 
-    def draw_tables_since(self, date, title):
-        thanks = self._get_thanks_since(date)
-        self._page.text += f'== {title} ==\n'
+    def draw_tables(self, since_datetime, group_title):
+        thanks = self._get_thanks(since_datetime)
+        self._page.text += f'== {group_title} ==\n'
         self._page.text += '<div style="float: left;">\n'
         self._draw_table(thanks['r'], 'Получени благодарности')
         self._page.text += '</div><div style="float: left;">\n'
@@ -67,18 +67,18 @@ class ThanksMeter:
 
 
 def main():
+    NOW = dt.utcnow()
+    TABLE_CONFIG = [
+            (NOW - rd(days=1), 'За последния ден'),
+            (NOW - rd(weeks=1), 'За последната седмица'),
+            (NOW - rd(months=1), 'За последния месец'),
+            (NOW - rd(months=3), 'За последните три месеца'),
+            (NOW - rd(years=1), 'За последната година'),
+            ]
     thanksmeter = ThanksMeter()
     thanksmeter.init_page()
-    thanksmeter.draw_tables_since(
-            dt.utcnow() - rd(days=1), 'За последния ден')
-    thanksmeter.draw_tables_since(
-            dt.utcnow() - rd(weeks=1), 'За последната седмица')
-    thanksmeter.draw_tables_since(
-            dt.utcnow() - rd(months=1), 'За последния месец')
-    thanksmeter.draw_tables_since(
-            dt.utcnow() - rd(months=3), 'За последните три месеца')
-    thanksmeter.draw_tables_since(
-            dt.utcnow() - rd(years=1), 'За последната година')
+    for since_datetime, group_title in TABLE_CONFIG:
+        thanksmeter.draw_tables(since_datetime, group_title)
     thanksmeter.save_page()
 
 
