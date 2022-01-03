@@ -14,8 +14,9 @@ class ThanksMeter:
         self._page = Page(self._site, 'Потребител:Iliev/Мерсиметър')
 
     def _get_thanks(self, since_datetime):
-        thanks = dict(r=dict(), s=dict())
+        thanks = dict(r=dict(), s=dict(), c=0)
         for thank in self._site.logevents(logtype='thanks', end=since_datetime):
+            thanks['c'] += 1
             try:
                 thanks['r'][thank.page().title(with_ns=False)] += 1
             except KeyError:
@@ -29,11 +30,13 @@ class ThanksMeter:
     def _sort_user_thanks(self, user_thanks_dict):
         presort = dict(
                 r=dict(sorted(user_thanks_dict['r'].items())),
-                s=dict(sorted(user_thanks_dict['s'].items()))
+                s=dict(sorted(user_thanks_dict['s'].items())),
+                c=user_thanks_dict['c']
                 )
         return dict(
                 r=dict(sorted(presort['r'].items(), key=lambda _: _[1], reverse=True)),
-                s=dict(sorted(presort['s'].items(), key=lambda _: _[1], reverse=True))
+                s=dict(sorted(presort['s'].items(), key=lambda _: _[1], reverse=True)),
+                c=presort['c']
                 )
 
     def _draw_table(self, user_thanks_dict, title):
@@ -57,12 +60,15 @@ class ThanksMeter:
             print('ERROR: Cannot save page: APIError: ' + str(e))
 
     def draw_tables(self, since_datetime, group_title):
+        thanks_help = ':en:Help:Notifications/Thanks'
         thanks = self._get_thanks(since_datetime)
         self._page.text += f'== {group_title} ==\n'
+        self._page.text += f": ''Общо [[{thanks_help}|благодарности]]: "
+        self._page.text += f"'''{thanks['c']}'''''\n"
         self._page.text += '<div style="float: left;">\n'
-        self._draw_table(thanks['r'], 'Получени благодарности')
+        self._draw_table(thanks['r'], 'Получени')
         self._page.text += '</div><div style="float: left;">\n'
-        self._draw_table(thanks['s'], 'Изпратени благодарности')
+        self._draw_table(thanks['s'], 'Изпратени')
         self._page.text += '</div>{{br}}\n'
 
 
