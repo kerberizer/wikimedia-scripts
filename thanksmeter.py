@@ -16,7 +16,6 @@ class ThanksMeter:
     def _get_thanks(self, since_datetime):
         thanks = dict(r=dict(), s=dict(), c=0)
         for thank in self._site.logevents(logtype='thanks', end=since_datetime):
-            thanks['c'] += 1
             try:
                 thanks['r'][thank.page().title(with_ns=False)] += 1
             except KeyError:
@@ -25,6 +24,7 @@ class ThanksMeter:
                 thanks['s'][thank.user()] += 1
             except KeyError:
                 thanks['s'][thank.user()] = 1
+            thanks['c'] += 1
         return self._sort_user_thanks(thanks)
 
     def _sort_user_thanks(self, user_thanks_dict):
