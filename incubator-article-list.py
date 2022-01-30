@@ -115,7 +115,10 @@ def main(argv):
 
     # Populate the table of articles.
     for article in list_of_articles:
-        article_name = article['fullname'].rsplit('/', 1)[1]
+        try:
+            article_name = article['fullname'].rsplit('/', 1)[1]
+        except IndexError:
+            article_name = article['fullname'].split(':', 1)[1]
         if article['status'] == 'redirect':
             delete(site, article['fullname'],
                    'Излишен остатък след преместване от [[Уикипедия:Инкубатор]]')
