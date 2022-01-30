@@ -27,8 +27,8 @@ def delete(site, article_name, reason):
 def main(argv):
     start_time = dt.datetime.utcnow()
     list_page_fullname = 'Уикипедия:Инкубатор/Списък на статиите'
-    article_pageprefix = 'Инкубатор/Статии/'
-    article_namespace = 'Уикипедия'
+    article_pageprefix = ''
+    article_namespace = 'Чернова'
     days_search_for_move = 360
     days_force_delete = 150
     days_critical = 120
