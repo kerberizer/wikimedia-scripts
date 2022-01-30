@@ -65,7 +65,8 @@ def main(argv):
             for rev in article.revisions():
                 if rev['timestamp'] < oldest_timestamp_to_check:
                     break
-                if re_page_move.match(rev['comment']):
+                # Temporary check if Kerberizer is the mover because of the mass move to Draft NS.
+                if re_page_move.match(rev['comment']) and not rev['user'] == 'Kerberizer':
                     timestamp_entered = rev['timestamp']
                     break
             # Article either created in Incubator or moved there earlier than days_search_for_move.
