@@ -35,8 +35,11 @@ def main(argv):
     days_warning = 90
 
     article_fullprefix = article_namespace + ':' + article_pageprefix
+    # TODO: Temporary legacy prefix for transferring to Incubator matching.
+    article_fullprefix_legacy = 'Уикипедия:Инкубатор/Статии/'
     re_page_move = re.compile(
-            r'.+ премести страница(та)? „\[\[.+?\]]“ като „\[\[' + article_fullprefix)
+            r'.+ премести страница(та)? „\[\[.+?\]]“ като „\[\[' + '(?:' +
+            article_fullprefix + '|' + article_fullprefix_legacy + ')')
     re_broken_redirect = re.compile(r'\n#(?:пренасочване|redirect)\s*\[\[', flags=re.I)
 
     site = pwb.Site(code='bg', fam='wikipedia')
