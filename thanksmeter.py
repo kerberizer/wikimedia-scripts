@@ -3,7 +3,7 @@
 from datetime import datetime as dt
 
 from dateutil.relativedelta import relativedelta as rd
-from pywikibot import Page, Site
+from pywikibot import Page, Site, User
 from pywikibot.exceptions import APIError
 
 
@@ -15,7 +15,16 @@ class ThanksMeter:
 
     def _get_thanks(self, since_datetime):
         thanks = dict(r=dict(), s=dict(), c=0)
+        user_blocks = {}
         for thank in self._site.logevents(logtype='thanks', end=since_datetime):
+            try:
+                if user_blocks[thank.user()]:
+                    continue
+            except KeyError:
+                user_is_blocked = User(self._site, thank.user()).is_blocked()
+                user_blocks[thank.user()] = user_is_blocked
+                if user_is_blocked:
+                    continue
             try:
                 thanks['r'][thank.page().title(with_ns=False)] += 1
             except KeyError:
