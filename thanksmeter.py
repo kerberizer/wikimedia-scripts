@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from datetime import datetime as dt
+from json import loads as jload
 
 from dateutil.relativedelta import relativedelta as rd
 from pywikibot import Page, Site, User
@@ -12,19 +13,22 @@ class ThanksMeter:
     def __init__(self):
         self._site = Site('bg', fam='wikipedia')
         self._page = Page(self._site, 'Потребител:Iliev/Мерсиметър')
+        self._settings_page = Page(self._site, 'Потребител:Iliev/Мерсиметър/settings.json')
+        self._settings = jload(self._settings_page.text)
+
+    def _ignore_user(self, user):
+        if user in self._settings['ignored_users']:
+            return True
+        elif User(self._site, user).is_blocked():
+            self._settings['ignored_users'].append(user)
+            return True
+        return False
 
     def _get_thanks(self, since_datetime):
         thanks = dict(r=dict(), s=dict(), c=0)
-        user_blocks = {}
         for thank in self._site.logevents(logtype='thanks', end=since_datetime):
-            try:
-                if user_blocks[thank.user()]:
-                    continue
-            except KeyError:
-                user_is_blocked = User(self._site, thank.user()).is_blocked()
-                user_blocks[thank.user()] = user_is_blocked
-                if user_is_blocked:
-                    continue
+            if self._ignore_user(thank.user()):
+                continue
             try:
                 thanks['r'][thank.page().title(with_ns=False)] += 1
             except KeyError:
