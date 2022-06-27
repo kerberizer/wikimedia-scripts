@@ -15,11 +15,19 @@ class ThanksMeter:
         self._page = Page(self._site, 'Потребител:Iliev/Мерсиметър')
         self._settings_page = Page(self._site, 'Потребител:Iliev/Мерсиметър/settings.json')
         self._settings = jload(self._settings_page.text)
+        self._user_blocks = {}
 
-    def _ignore_user(self, user):
+    def _is_user_blocked(self, user):
+        try:
+            return self._user_blocks[user]
+        except KeyError:
+            self._user_blocks[user] = User(self._site, user).is_blocked()
+            return self._user_blocks[user]
+
+    def _must_ignore_user(self, user):
         if user in self._settings['ignored_users']:
             return True
-        elif User(self._site, user).is_blocked():
+        elif self._is_user_blocked(user):
             self._settings['ignored_users'].append(user)
             return True
         return False
@@ -27,7 +35,7 @@ class ThanksMeter:
     def _get_thanks(self, since_datetime):
         thanks = dict(r=dict(), s=dict(), c=0)
         for thank in self._site.logevents(logtype='thanks', end=since_datetime):
-            if self._ignore_user(thank.user()):
+            if self._must_ignore_user(thank.user()):
                 continue
             try:
                 thanks['r'][thank.page().title(with_ns=False)] += 1
