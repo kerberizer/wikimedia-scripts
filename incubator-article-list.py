@@ -96,7 +96,14 @@ def main(argv):
                     if status in ('normal', 'help', 'warning'):
                         status = 'review'
                     if template.params:
-                        reviewer = template.get(1).value
+                        try:
+                            reviewer = template.get(1).value
+                        except ValueError:
+                            reviewer = ''.join([
+                                '<span style="color: red; font-weight: bold;">',
+                                'Грешно попълнен шаблон {{ш|инкубатор-проверка}}.',
+                                '</span>',
+                                ])
                 elif template.name.matches('помощ'):
                     if status in ('normal'):
                         status = 'help'
