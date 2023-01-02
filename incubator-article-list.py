@@ -33,6 +33,8 @@ def main(argv):
     days_force_delete = 150
     days_critical = 120
     days_warning = 90
+    sysops_to_ping = ['Iliev']
+    sysop_ping = '{{@|' + '|'.join(sysops_to_ping) + '}}'
 
     article_fullprefix = article_namespace + ':' + article_pageprefix
     # TODO: Temporary legacy prefix for transferring to Incubator matching.
@@ -134,7 +136,7 @@ def main(argv):
             article_name = article['fullname'].split(':', 1)[1]
         if article['status'] == 'redirect':
             delete(site, article['fullname'],
-                   'Излишен остатък след преместване от [[Уикипедия:Инкубатор]]')
+                   f'Излишен остатък след преместване от [[Уикипедия:Инкубатор]] {sysop_ping}')
             list_page_content.append('|- style="background-color: #ff66ff;"')
             link = '{{без пренасочване|' + article['fullname'] + '|' + article_name + '}}'
         else:
