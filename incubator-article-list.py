@@ -34,7 +34,7 @@ def main(argv):
     days_critical = 120
     days_warning = 90
     sysops_to_ping = ['Iliev']
-    sysop_ping = '{{@|' + '|'.join(sysops_to_ping) + '}}'
+    sysop_ping = ', '.join(['@[[User:' + _ + '|' + _ + ']]' for _ in sysops_to_ping])
 
     article_fullprefix = article_namespace + ':' + article_pageprefix
     # TODO: Temporary legacy prefix for transferring to Incubator matching.
