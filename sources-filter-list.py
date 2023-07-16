@@ -53,7 +53,7 @@ def main(argv):
 
         locale.setlocale(locale.LC_TIME, 'bg_BG.UTF-8')
         lupd_page.text = dt.now().strftime('%H:%M на %e %B %Y').lower()
-        locale.resetlocale(locale.LC_TIME)
+        locale.setlocale(locale.LC_TIME, '')
 
         list_page.save(summary='Бот: актуализация', quiet=True)
         lnum_page.save(summary='Бот: актуализация', quiet=True)
