@@ -11,15 +11,20 @@ import pywikibot as pwb
 from pywikibot.exceptions import APIError
 
 
-def is_proposed_for_deletion(article):
+def is_proposed_for_deletion(article: pwb.Page) -> bool:
     return re.search(r'{{delete|1=Бот:', article.text, flags=re.I)
 
 
-def delete(site, article_name, reason):
+def delete(site: pwb.Site, article_name: str, reason: str, delete_talk=False) -> None:
     article = pwb.Page(site, article_name)
-    if not is_proposed_for_deletion(article) and article.exists():
+    pages_to_delete = [article]
+    if delete_talk:
+        pages_to_delete.append(article.toggleTalkPage())
+    for page in pages_to_delete:
+        if is_proposed_for_deletion(page) or not page.exists():
+            continue
         try:
-            article.delete(reason=f'Бот: {reason}', prompt=False, mark=True)
+            page.delete(reason=f'Бот: {reason}', prompt=False, mark=True)
         except APIError as e:
             print('APIError exception: {}'.format(str(e)), file=sys.stderr)
 
@@ -136,7 +141,8 @@ def main(argv):
             article_name = article['fullname'].split(':', 1)[1]
         if article['status'] == 'redirect':
             delete(site, article['fullname'],
-                   f'Излишен остатък след преместване от [[Уикипедия:Инкубатор]] {sysop_ping}')
+                   f'Излишен остатък след преместване от [[Уикипедия:Инкубатор]] {sysop_ping}',
+                   delete_talk=True)
             list_page_content.append('|- style="background-color: #ff66ff;"')
             link = '{{без пренасочване|' + article['fullname'] + '|' + article_name + '}}'
         else:
