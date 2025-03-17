@@ -27,7 +27,7 @@ page_date = pwb.Page(w, 'Уикипедия:Македония/Брояч/Дат
 locale.setlocale(locale.LC_TIME, 'bg_BG.UTF-8')
 page_date.text = dt.now().strftime('%e %B %Y').lower()
 page_date.save('Бот: актуализация на датата')
-locale.resetlocale(locale.LC_TIME)
+locale.setlocale(locale.LC_TIME, '')
 page_counter.text = cat_mk.categoryinfo['pages']
 page_counter.save('Бот: актуализация на брояча')
 
