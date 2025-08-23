@@ -117,7 +117,7 @@ def main(argv):
             if not has_incubator_template:
                 try:
                     article.text = '{{в инкубатора}}\n' + article.text
-                    article.save(summary='Бот: добавяне на {{в инкубатора}}', quiet=True)
+                    article.save(summary='Бот: добавяне на помощен шаблон за чернови', quiet=True)
                 except APIError as e:
                     print('APIError exception: {}'.format(str(e)), file=sys.stderr)
                 except pwb.exceptions.LockedPage as e:
