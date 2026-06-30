@@ -24,4 +24,5 @@
 
 ## Style
 - Preserve Bulgarian page names, edit summaries, and bot-facing text exactly unless the task is to change them.
+- Use `{{ш|Име на шаблон}}` when wiki text should conveniently link to a template.
 - Existing scripts use executable shebangs, 4-space indentation, and a 100-column lint limit.
