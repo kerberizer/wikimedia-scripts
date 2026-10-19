@@ -30,7 +30,7 @@ def delete(site: pwb.Site, article_name: str, reason: str, delete_talk=False) ->
 
 
 def main(argv):
-    start_time = dt.datetime.utcnow()
+    start_time = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None)
     list_page_fullname = 'Уикипедия:Инкубатор/Списък на статиите'
     article_pageprefix = ''
     article_namespace = 'Чернова'

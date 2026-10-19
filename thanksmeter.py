@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from datetime import datetime as dt
+from datetime import datetime as dt, timezone
 from json import loads as jload
 
 from dateutil.relativedelta import relativedelta as rd
@@ -94,7 +94,7 @@ class ThanksMeter:
 
 
 def main():
-    NOW = dt.utcnow()
+    NOW = dt.now(timezone.utc).replace(tzinfo=None)
     TABLE_CONFIG = [
             (NOW - rd(days=1), 'За последния ден'),
             (NOW - rd(weeks=1), 'За последната седмица'),
