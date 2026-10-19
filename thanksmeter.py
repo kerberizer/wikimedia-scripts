@@ -94,7 +94,7 @@ class ThanksMeter:
 
 
 def main():
-    NOW = dt.now(timezone.utc).replace(tzinfo=None)
+    NOW = dt.now(timezone.utc)
     TABLE_CONFIG = [
             (NOW - rd(days=1), 'За последния ден'),
             (NOW - rd(weeks=1), 'За последната седмица'),
