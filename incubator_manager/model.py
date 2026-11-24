@@ -4,6 +4,11 @@ MALFORMED_REVIEW_TEMPLATE = (
     '<span style="color: red; font-weight: bold;">Грешно попълнен шаблон '
     "{{ш|инкубатор-проверка}}.</span>"
 )
+POSITIONAL_REVIEW_PARAMETER = (
+    '<span style="color: red; font-weight: bold;">Грешно попълнен шаблон '
+    "{{ш|Чернова за преглед}}: използвайте именувания параметър "
+    "<code>проверяващ=</code>.</span>"
+)
 
 
 @dataclass(frozen=True)
@@ -12,6 +17,9 @@ class TemplateState:
     review_requested: bool = False
     help_requested: bool = False
     reviewer: str = ""
+    reviewer_diagnostic: str = ""
+    review_template_name: str = ""
+    legacy_reviewer_parameter: bool = False
 
 
 @dataclass(frozen=True)
@@ -21,6 +29,9 @@ class DraftRecord:
     author: str
     age_status: str = "normal"
     reviewer: str = ""
+    reviewer_diagnostic: str = ""
+    review_template_name: str = ""
+    legacy_reviewer_parameter: bool = False
     review_requested: bool = False
     help_requested: bool = False
     is_redirect: bool = False
@@ -39,3 +50,17 @@ class DraftRecord:
         if self.help_requested:
             return "help"
         return "normal"
+
+    @property
+    def review_state(self):
+        if not self.review_requested:
+            return "none"
+        if self.reviewer_diagnostic:
+            return "diagnostic"
+        if self.reviewer:
+            return "claimed"
+        return "unclaimed"
+
+    @property
+    def reviewer_display(self):
+        return self.reviewer_diagnostic or self.reviewer

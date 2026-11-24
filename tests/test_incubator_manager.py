@@ -18,7 +18,11 @@ from incubator_manager.cli import run
 from incubator_manager.collect import find_entered_timestamp
 from incubator_manager.config import Config
 from incubator_manager.identity import assert_write_identity
-from incubator_manager.model import MALFORMED_REVIEW_TEMPLATE, DraftRecord
+from incubator_manager.model import (
+    MALFORMED_REVIEW_TEMPLATE,
+    POSITIONAL_REVIEW_PARAMETER,
+    DraftRecord,
+)
 from incubator_manager.render import render_list
 
 
@@ -76,9 +80,46 @@ class IncubatorClassificationTests(unittest.TestCase):
         self.assertTrue(state.help_requested)
         self.assertEqual(state.reviewer, "Example")
 
-    def test_named_reviewer_is_reported_as_malformed_under_current_rules(self):
-        state = inspect_templates("{{инкубатор-проверка|проверяващ=Example}}")
-        self.assertEqual(state.reviewer, MALFORMED_REVIEW_TEMPLATE)
+    def test_new_template_family_is_recognized_as_managed_draft_states(self):
+        review = inspect_templates("{{Чернова за преглед}}")
+        help_request = inspect_templates("{{Чернова за помощ}}")
+        base = inspect_templates("{{Чернова}}")
+
+        self.assertTrue(review.has_incubator_template)
+        self.assertTrue(review.review_requested)
+        self.assertTrue(help_request.has_incubator_template)
+        self.assertTrue(help_request.help_requested)
+        self.assertTrue(base.has_incubator_template)
+
+    def test_named_reviewer_is_accepted_for_new_and_legacy_templates(self):
+        canonical = inspect_templates("{{Чернова за преглед|проверяващ=Example}}")
+        legacy = inspect_templates("{{инкубатор-проверка|проверяващ=Example}}")
+
+        self.assertEqual(canonical.reviewer, "Example")
+        self.assertEqual(canonical.review_template_name, "чернова за преглед")
+        self.assertFalse(canonical.legacy_reviewer_parameter)
+        self.assertEqual(legacy.reviewer, "Example")
+        self.assertEqual(legacy.review_template_name, "инкубатор-проверка")
+        self.assertFalse(legacy.legacy_reviewer_parameter)
+
+    def test_legacy_positional_reviewer_remains_compatible_during_migration(self):
+        state = inspect_templates("{{инкубатор-проверка|Example}}")
+
+        self.assertEqual(state.reviewer, "Example")
+        self.assertTrue(state.legacy_reviewer_parameter)
+        self.assertEqual(state.reviewer_diagnostic, "")
+
+    def test_canonical_positional_reviewer_gets_explicit_diagnostic(self):
+        state = inspect_templates("{{Чернова за преглед|Example}}")
+
+        self.assertEqual(state.reviewer, "")
+        self.assertEqual(state.reviewer_diagnostic, POSITIONAL_REVIEW_PARAMETER)
+
+    def test_unknown_review_parameter_is_reported_as_malformed(self):
+        state = inspect_templates("{{инкубатор-проверка|друг=Example}}")
+
+        self.assertEqual(state.reviewer, "")
+        self.assertEqual(state.reviewer_diagnostic, MALFORMED_REVIEW_TEMPLATE)
 
     def test_redirect_and_deletion_patterns_remain_compatible(self):
         self.assertTrue(is_broken_redirect("text\n#ПРЕНАСОЧВАНЕ [[Статия]]"))
@@ -117,6 +158,32 @@ class IncubatorClassificationTests(unittest.TestCase):
         self.assertEqual(
             DraftRecord("Чернова:A", "x", "Author", is_redirect=True).status,
             "redirect",
+        )
+
+    def test_review_state_distinguishes_unclaimed_claimed_and_diagnostic(self):
+        self.assertEqual(
+            DraftRecord("Чернова:A", "x", "Author", review_requested=True).review_state,
+            "unclaimed",
+        )
+        self.assertEqual(
+            DraftRecord(
+                "Чернова:A",
+                "x",
+                "Author",
+                reviewer="Reviewer",
+                review_requested=True,
+            ).review_state,
+            "claimed",
+        )
+        self.assertEqual(
+            DraftRecord(
+                "Чернова:A",
+                "x",
+                "Author",
+                reviewer_diagnostic="bad parameter",
+                review_requested=True,
+            ).review_state,
+            "diagnostic",
         )
 
     def test_legacy_timestamp_format_is_preserved(self):

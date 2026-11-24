@@ -42,7 +42,7 @@ def render_row(record):
     return (
         f"{row_start}\n"
         f"| {article_link(record)} || {legacy_timestamp_text(record.timestamp)} || "
-        f"{{{{потребител|{record.author}}}}} || {record.reviewer}"
+        f"{{{{потребител|{record.author}}}}} || {record.reviewer_display}"
     )
 
 
