@@ -7,6 +7,7 @@ import pywikibot
 from .actions import add_incubator_template, apply_maintenance_actions, planned_actions
 from .collect import iter_records
 from .config import Config
+from .identity import assert_write_identity
 from .render import render_list
 
 
@@ -26,6 +27,8 @@ def run(dry_run=False, config=None):
     config = config or Config()
     start_time = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
     site = pywikibot.Site(code=config.site_code, fam=config.site_family)
+    if not dry_run:
+        assert_write_identity(site, config.expected_username)
     list_page = pywikibot.Page(site, config.list_page_name)
     records = []
 

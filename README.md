@@ -8,7 +8,9 @@ The code is likely crude and mostly undocumented. It's released in the public do
 
 `incubator-article-list.py` maintains the draft list and the existing
 Incubator templates on the Bulgarian Wikipedia. Its no-argument invocation is
-the production, write-enabled mode retained for the existing systemd timer:
+the production, write-enabled mode retained for the existing systemd timer.
+Before any live action it requires the authenticated account to be
+`Eliza Beth`:
 
 ```sh
 ./incubator-article-list.py

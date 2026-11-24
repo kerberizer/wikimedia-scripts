@@ -5,6 +5,7 @@ from dataclasses import dataclass
 class Config:
     site_code: str = "bg"
     site_family: str = "wikipedia"
+    expected_username: str = "Eliza Beth"
     list_page_name: str = "Уикипедия:Инкубатор/Списък на статиите"
     article_prefix: str = ""
     article_namespace: str = "Чернова"

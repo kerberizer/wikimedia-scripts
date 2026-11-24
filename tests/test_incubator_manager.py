@@ -17,6 +17,7 @@ from incubator_manager.classify import (
 from incubator_manager.cli import run
 from incubator_manager.collect import find_entered_timestamp
 from incubator_manager.config import Config
+from incubator_manager.identity import assert_write_identity
 from incubator_manager.model import MALFORMED_REVIEW_TEMPLATE, DraftRecord
 from incubator_manager.render import render_list
 
@@ -277,6 +278,7 @@ class IncubatorCliTests(unittest.TestCase):
                 "incubator_manager.cli.iter_records",
                 return_value=[(self.article, self.record)],
             ),
+            mock.patch("incubator_manager.cli.assert_write_identity") as identity,
             mock.patch("incubator_manager.cli.add_incubator_template") as add_template,
             mock.patch(
                 "incubator_manager.cli.apply_maintenance_actions"
@@ -287,6 +289,7 @@ class IncubatorCliTests(unittest.TestCase):
             result = run(dry_run=True, config=self.config)
 
         self.assertEqual(result, 0)
+        identity.assert_not_called()
         add_template.assert_not_called()
         maintenance.assert_not_called()
         self.list_page.save.assert_not_called()
@@ -303,6 +306,7 @@ class IncubatorCliTests(unittest.TestCase):
                 "incubator_manager.cli.iter_records",
                 return_value=[(self.article, self.record)],
             ),
+            mock.patch("incubator_manager.cli.assert_write_identity") as identity,
             mock.patch("incubator_manager.cli.add_incubator_template") as add_template,
             mock.patch(
                 "incubator_manager.cli.apply_maintenance_actions"
@@ -311,12 +315,34 @@ class IncubatorCliTests(unittest.TestCase):
             result = run(dry_run=False, config=self.config)
 
         self.assertEqual(result, 0)
+        identity.assert_called_once_with(self.site, "Eliza Beth")
         add_template.assert_called_once_with(self.article)
         maintenance.assert_called_once_with(self.site, [self.record], self.config)
         self.list_page.save.assert_called_once_with(
             summary="Бот: актуализация на списъка",
             quiet=True,
         )
+
+
+class IncubatorIdentityTests(unittest.TestCase):
+    def test_expected_account_is_accepted(self):
+        site = mock.Mock()
+        site.user.return_value = "Eliza Beth"
+
+        assert_write_identity(site, "Eliza Beth")
+
+        site.login.assert_called_once_with()
+        site.user.assert_called_once_with()
+
+    def test_unexpected_account_is_rejected(self):
+        site = mock.Mock()
+        site.user.return_value = "Kerberizer"
+
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "refusing to write as 'Kerberizer'; expected 'Eliza Beth'",
+        ):
+            assert_write_identity(site, "Eliza Beth")
 
 
 if __name__ == "__main__":
