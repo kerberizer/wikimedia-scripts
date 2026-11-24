@@ -1,4 +1,3 @@
-import html
 from dataclasses import dataclass
 
 from .classify import legacy_timestamp_text
@@ -14,8 +13,9 @@ class QueueGroups:
     long_stay: tuple
 
 
-def record_sort_key(record):
-    return legacy_timestamp_text(record.timestamp)
+def record_sort_key(record, timestamp_name):
+    timestamp = getattr(record, timestamp_name) or record.timestamp
+    return legacy_timestamp_text(timestamp)
 
 
 def group_records(records):
@@ -24,13 +24,13 @@ def group_records(records):
         unclaimed_reviews=tuple(
             sorted(
                 (record for record in records if record.review_state == "unclaimed"),
-                key=record_sort_key,
+                key=lambda record: record_sort_key(record, "review_request_timestamp"),
             )
         ),
         claimed_reviews=tuple(
             sorted(
                 (record for record in records if record.review_state == "claimed"),
-                key=record_sort_key,
+                key=lambda record: record_sort_key(record, "review_request_timestamp"),
             )
         ),
         review_diagnostics=tuple(
@@ -40,20 +40,21 @@ def group_records(records):
                     for record in records
                     if record.review_state == "diagnostic"
                     or record.legacy_reviewer_parameter
+                    or record.same_user_reviewer_claim
                 ),
-                key=record_sort_key,
+                key=lambda record: record_sort_key(record, "review_request_timestamp"),
             )
         ),
         help_requests=tuple(
             sorted(
                 (record for record in records if record.help_requested),
-                key=record_sort_key,
+                key=lambda record: record_sort_key(record, "help_request_timestamp"),
             )
         ),
         long_stay=tuple(
             sorted(
                 (record for record in records if record.age_status == "long_stay"),
-                key=record_sort_key,
+                key=lambda record: record_sort_key(record, "timestamp"),
             )
         ),
     )
@@ -68,29 +69,38 @@ def age_label(record):
     }.get(record.age_status, record.age_status)
 
 
+def user_link(username):
+    return f"{{{{потребител|{username}}}}}"
+
+
 def author_link(record):
-    return f"{{{{потребител|{record.author}}}}}"
+    return user_link(record.author)
 
 
-def plain_template_value(value):
-    escaped = html.escape(value, quote=False)
-    return escaped.translate(
-        str.maketrans(
-            {
-                "[": "&#91;",
-                "]": "&#93;",
-                "{": "&#123;",
-                "}": "&#125;",
-                "|": "&#124;",
-            }
-        )
-    )
+def reviewer_link(record):
+    if not record.reviewer_claim_user:
+        return "неизвестно"
+    return user_link(record.reviewer_claim_user)
+
+
+def timestamp_text(value):
+    if value is None:
+        return "неизвестно"
+    return legacy_timestamp_text(value)
+
+
+def talk_activity(record):
+    if not record.talk_exists:
+        return "няма беседа"
+    return timestamp_text(record.talk_timestamp)
 
 
 def review_diagnostic(record):
     messages = []
     if record.legacy_reviewer_parameter:
         messages.append("временен позиционен параметър в {{ш|Инкубатор-проверка}}")
+    if record.same_user_reviewer_claim:
+        messages.append("прегледът изглежда поет от първоначалния автор")
     if record.reviewer_diagnostic:
         messages.append(record.reviewer_diagnostic)
     return "; ".join(messages)
@@ -105,26 +115,34 @@ def additional_signals(record):
     return ", ".join(signals) or "—"
 
 
-def render_table(records, extra_header=None, extra_value=None):
-    header = "! Чернова !! Влязла ([[UTC]]) !! Автор !! Възраст"
-    if extra_header:
-        header += f" !! {extra_header}"
+def render_table(records, columns):
     lines = [
         '{| class="wikitable sortable plainlinks" style="font-size: small;"',
-        header,
+        "! " + " !! ".join(header for header, _value in columns),
     ]
     for record in records:
-        values = [
-            article_link(record),
-            legacy_timestamp_text(record.timestamp),
-            author_link(record),
-            age_label(record),
-        ]
-        if extra_value:
-            values.append(extra_value(record))
+        values = [value(record) for _header, value in columns]
         lines.extend(("|-", "| " + " || ".join(values)))
     lines.append("|}")
     return "\n".join(lines)
+
+
+BASE_COLUMNS = (
+    ("Чернова", article_link),
+    ("Влязла ([[UTC]])", lambda record: timestamp_text(record.timestamp)),
+    ("Автор", author_link),
+    ("Възраст", age_label),
+)
+
+TALK_COLUMN = ("Последна активност по беседата ([[UTC]])", talk_activity)
+REVIEW_REQUEST_COLUMN = (
+    "Заявка за преглед ([[UTC]])",
+    lambda record: timestamp_text(record.review_request_timestamp),
+)
+HELP_REQUEST_COLUMN = (
+    "Заявка за помощ ([[UTC]])",
+    lambda record: timestamp_text(record.help_request_timestamp),
+)
 
 
 def render_queue_preview(records):
@@ -133,30 +151,63 @@ def render_queue_preview(records):
         "<!-- Локален преглед; не публикувайте без отделен преглед. -->",
         "= Опашки на Инкубатора – локален преглед =",
         (
-            "''Този временен преглед още не изчислява момента на заявката или "
-            "активността на беседата.''"
+            "''Моментът на заявката е началото на текущото непрекъснато "
+            "присъствие на съответния шаблон. Опашката осигурява видимост, "
+            "но не обещава срок за отговор.''"
         ),
         f"== Чакат преглеждащ ({len(groups.unclaimed_reviews)}) ==",
-        render_table(groups.unclaimed_reviews),
+        render_table(
+            groups.unclaimed_reviews,
+            (
+                BASE_COLUMNS[0],
+                REVIEW_REQUEST_COLUMN,
+                TALK_COLUMN,
+                *BASE_COLUMNS[1:],
+            ),
+        ),
         f"== Преглеждат се ({len(groups.claimed_reviews)}) ==",
         render_table(
             groups.claimed_reviews,
-            "Преглеждащ (непроверена стойност от шаблона)",
-            lambda record: plain_template_value(record.reviewer),
+            (
+                BASE_COLUMNS[0],
+                REVIEW_REQUEST_COLUMN,
+                (
+                    "Преглеждащ (редактор на ревизията)",
+                    reviewer_link,
+                ),
+                (
+                    "Поета ([[UTC]])",
+                    lambda record: timestamp_text(record.reviewer_claim_timestamp),
+                ),
+                TALK_COLUMN,
+                *BASE_COLUMNS[1:],
+            ),
         ),
         f"== Диагностики при преглед ({len(groups.review_diagnostics)}) ==",
         render_table(
             groups.review_diagnostics,
-            "Диагностика",
-            review_diagnostic,
+            (
+                BASE_COLUMNS[0],
+                REVIEW_REQUEST_COLUMN,
+                ("Диагностика", review_diagnostic),
+                TALK_COLUMN,
+                *BASE_COLUMNS[1:],
+            ),
         ),
         f"== Искат помощ ({len(groups.help_requests)}) ==",
-        render_table(groups.help_requests),
+        render_table(
+            groups.help_requests,
+            (
+                BASE_COLUMNS[0],
+                HELP_REQUEST_COLUMN,
+                TALK_COLUMN,
+                *BASE_COLUMNS[1:],
+            ),
+        ),
         f"== Чернови с продължителен престой ({len(groups.long_stay)}) ==",
         render_table(
             groups.long_stay,
-            "Други сигнали",
-            additional_signals,
+            (*BASE_COLUMNS, TALK_COLUMN, ("Други сигнали", additional_signals)),
         ),
     ]
     return "\n\n".join(sections)

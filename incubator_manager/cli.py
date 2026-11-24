@@ -8,6 +8,7 @@ from .actions import add_incubator_template, apply_maintenance_actions, planned_
 from .collect import iter_records
 from .config import Config
 from .identity import assert_write_identity
+from .metadata import enrich_queue_record
 from .queues import render_queue_preview
 from .render import render_list
 
@@ -43,6 +44,8 @@ def run(dry_run=False, preview_queues=False, config=None):
     for article, record in iter_records(site, start_time, config):
         if record.needs_incubator_template and not read_only:
             add_incubator_template(article)
+        if preview_queues:
+            record = enrich_queue_record(article, record)
         records.append(record)
 
     if preview_queues:

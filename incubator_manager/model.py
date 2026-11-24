@@ -34,6 +34,12 @@ class DraftRecord:
     legacy_reviewer_parameter: bool = False
     review_requested: bool = False
     help_requested: bool = False
+    review_request_timestamp: object = None
+    reviewer_claim_timestamp: object = None
+    reviewer_claim_user: str = ""
+    help_request_timestamp: object = None
+    talk_exists: bool = False
+    talk_timestamp: object = None
     is_redirect: bool = False
     needs_incubator_template: bool = False
 
@@ -64,3 +70,11 @@ class DraftRecord:
     @property
     def reviewer_display(self):
         return self.reviewer_diagnostic or self.reviewer
+
+    @property
+    def same_user_reviewer_claim(self):
+        if not self.reviewer_claim_user:
+            return False
+        reviewer = self.reviewer_claim_user.replace("_", " ").strip().casefold()
+        author = self.author.replace("_", " ").strip().casefold()
+        return reviewer == author

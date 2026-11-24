@@ -31,9 +31,11 @@ drafts:
 ./incubator-article-list.py --preview-queues
 ```
 
-The preview deliberately labels reviewer values as unverified and escapes
-their wikitext. It does not yet calculate request timestamps or talk-page
-activity, and is not intended for direct publication.
+The preview does not trust reviewer-parameter wikitext as an identity. It uses
+the editor of the revision which introduced the current reviewer claim,
+reconstructs the start of the current continuous review or help-template
+episode, and shows the latest talk-page revision or that no talk page exists.
+It is not intended for direct publication.
 
 The entry point is deliberately thin. The collection, classification,
 rendering, and mutation code lives in the importable `incubator_manager`

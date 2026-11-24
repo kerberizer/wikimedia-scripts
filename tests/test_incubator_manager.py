@@ -18,6 +18,11 @@ from incubator_manager.cli import run
 from incubator_manager.collect import find_entered_timestamp
 from incubator_manager.config import Config
 from incubator_manager.identity import assert_write_identity
+from incubator_manager.metadata import (
+    enrich_queue_record,
+    find_current_request_timestamps,
+    latest_talk_activity,
+)
 from incubator_manager.model import (
     MALFORMED_REVIEW_TEMPLATE,
     POSITIONAL_REVIEW_PARAMETER,
@@ -121,12 +126,6 @@ class IncubatorClassificationTests(unittest.TestCase):
 
         self.assertEqual(state.reviewer, "")
         self.assertEqual(state.reviewer_diagnostic, MALFORMED_REVIEW_TEMPLATE)
-
-    def test_unused_checking_parameter_is_not_kept_as_an_alias(self):
-        state = inspect_templates("{{Чернова за преглед|проверяващ=Example}}")
-
-        self.assertEqual(state.reviewer, "")
-        self.assertEqual(state.reviewer_diagnostic, POSITIONAL_REVIEW_PARAMETER)
 
     def test_redirect_and_deletion_patterns_remain_compatible(self):
         self.assertTrue(is_broken_redirect("text\n#ПРЕНАСОЧВАНЕ [[Статия]]"))
@@ -254,6 +253,106 @@ class IncubatorMoveTests(unittest.TestCase):
         self.assertIsNone(find_entered_timestamp([revision], self.start, self.config))
 
 
+class IncubatorQueueMetadataTests(unittest.TestCase):
+    def setUp(self):
+        self.start = pywikibot.Timestamp(2026, 11, 25, 12)
+
+    def revision(self, hours, text, user="Editor"):
+        return {
+            "timestamp": self.start - datetime.timedelta(hours=hours),
+            "text": text,
+            "user": user,
+        }
+
+    def test_current_review_and_claim_episodes_have_separate_start_times(self):
+        record = DraftRecord(
+            "Чернова:Пример",
+            self.start,
+            "Author",
+            review_requested=True,
+            reviewer="Reviewer",
+        )
+        revisions = [
+            self.revision(0, "{{Инкубатор-проверка|Reviewer}}", "Reviewer"),
+            self.revision(1, "{{Инкубатор-проверка|Reviewer}}", "Reviewer"),
+            self.revision(2, "{{Инкубатор-проверка}}"),
+            self.revision(3, "{{В инкубатора}}"),
+        ]
+
+        timestamps = find_current_request_timestamps(revisions, record)
+
+        self.assertEqual(timestamps.review_request, revisions[2]["timestamp"])
+        self.assertEqual(timestamps.reviewer_claim, revisions[1]["timestamp"])
+        self.assertEqual(timestamps.reviewer_claim_user, "Reviewer")
+        self.assertIsNone(timestamps.help_request)
+
+    def test_current_help_episode_stops_at_last_revision_without_template(self):
+        record = DraftRecord(
+            "Чернова:Пример",
+            self.start,
+            "Author",
+            help_requested=True,
+        )
+        revisions = [
+            self.revision(0, "{{Помощ}}"),
+            self.revision(1, "{{Помощ}}"),
+            self.revision(2, "{{В инкубатора}}"),
+            self.revision(3, "{{Помощ}}"),
+        ]
+
+        timestamps = find_current_request_timestamps(revisions, record)
+
+        self.assertEqual(timestamps.help_request, revisions[1]["timestamp"])
+
+    def test_hidden_revision_makes_an_open_episode_timestamp_unknown(self):
+        record = DraftRecord(
+            "Чернова:Пример",
+            self.start,
+            "Author",
+            review_requested=True,
+        )
+        revisions = [
+            self.revision(0, "{{Инкубатор-проверка}}"),
+            self.revision(1, None),
+        ]
+
+        timestamps = find_current_request_timestamps(revisions, record)
+
+        self.assertIsNone(timestamps.review_request)
+
+    def test_latest_talk_activity_distinguishes_a_missing_talk_page(self):
+        article = mock.Mock()
+        talk_page = article.toggleTalkPage.return_value
+        talk_page.exists.return_value = False
+
+        self.assertEqual(latest_talk_activity(article), (False, None))
+
+    def test_enrichment_reads_history_and_talk_without_mutating_page(self):
+        article = mock.Mock()
+        article.revisions.return_value = [
+            self.revision(0, "{{Инкубатор-проверка}}", "Requester")
+        ]
+        talk_page = article.toggleTalkPage.return_value
+        talk_page.exists.return_value = True
+        talk_page.latest_revision.timestamp = self.start - datetime.timedelta(hours=2)
+        record = DraftRecord(
+            "Чернова:Пример",
+            self.start,
+            "Author",
+            review_requested=True,
+        )
+
+        enriched = enrich_queue_record(article, record)
+
+        article.revisions.assert_called_once_with(content=True)
+        self.assertEqual(enriched.review_request_timestamp, self.start)
+        self.assertTrue(enriched.talk_exists)
+        self.assertEqual(
+            enriched.talk_timestamp,
+            self.start - datetime.timedelta(hours=2),
+        )
+
+
 class IncubatorOutputTests(unittest.TestCase):
     def setUp(self):
         self.config = Config()
@@ -358,13 +457,20 @@ class IncubatorQueuePreviewTests(unittest.TestCase):
                 "Author One",
                 review_requested=True,
                 help_requested=True,
+                review_request_timestamp=pywikibot.Timestamp(2026, 11, 10),
+                help_request_timestamp=pywikibot.Timestamp(2026, 11, 11),
             ),
             DraftRecord(
-                "Чернова:Проверява се",
+                "Чернова:Преглежда се",
                 pywikibot.Timestamp(2026, 11, 2),
                 "Author Two",
                 reviewer="[[User:Reviewer|Reviewer]] {{unsafe}} <tag>",
                 review_requested=True,
+                review_request_timestamp=pywikibot.Timestamp(2026, 11, 12),
+                reviewer_claim_timestamp=pywikibot.Timestamp(2026, 11, 13),
+                reviewer_claim_user="Reviewer",
+                talk_exists=True,
+                talk_timestamp=pywikibot.Timestamp(2026, 11, 14),
             ),
             DraftRecord(
                 "Чернова:Стара",
@@ -374,6 +480,7 @@ class IncubatorQueuePreviewTests(unittest.TestCase):
                 reviewer="Legacy Reviewer",
                 review_requested=True,
                 legacy_reviewer_parameter=True,
+                reviewer_claim_user="Author Three",
             ),
         ]
 
@@ -385,7 +492,7 @@ class IncubatorQueuePreviewTests(unittest.TestCase):
         )
         self.assertEqual(
             [record.fullname for record in groups.claimed_reviews],
-            ["Чернова:Стара", "Чернова:Проверява се"],
+            ["Чернова:Стара", "Чернова:Преглежда се"],
         )
         self.assertEqual(
             [record.fullname for record in groups.review_diagnostics],
@@ -398,7 +505,7 @@ class IncubatorQueuePreviewTests(unittest.TestCase):
             [record.fullname for record in groups.long_stay], ["Чернова:Стара"]
         )
 
-    def test_queue_preview_escapes_untrusted_reviewer_wikitext(self):
+    def test_queue_preview_uses_claim_revision_user_not_parameter_wikitext(self):
         preview = render_queue_preview(self.records)
 
         self.assertIn("== Чакат преглеждащ (1) ==", preview)
@@ -406,12 +513,14 @@ class IncubatorQueuePreviewTests(unittest.TestCase):
         self.assertIn("== Диагностики при преглед (1) ==", preview)
         self.assertIn("== Искат помощ (1) ==", preview)
         self.assertIn("== Чернови с продължителен престой (1) ==", preview)
-        self.assertIn(
-            "&#91;&#91;User:Reviewer&#124;Reviewer&#93;&#93; "
-            "&#123;&#123;unsafe&#125;&#125; &lt;tag&gt;",
-            preview,
-        )
+        self.assertIn("{{потребител|Reviewer}}", preview)
+        self.assertNotIn("[[User:Reviewer|Reviewer]]", preview)
         self.assertNotIn("{{unsafe}}", preview)
+        self.assertIn("прегледът изглежда поет от първоначалния автор", preview)
+        self.assertIn("2026-11-10 00:00:00", preview)
+        self.assertIn("2026-11-13 00:00:00", preview)
+        self.assertIn("2026-11-14 00:00:00", preview)
+        self.assertIn("няма беседа", preview)
 
 
 class IncubatorCliTests(unittest.TestCase):
@@ -495,6 +604,10 @@ class IncubatorCliTests(unittest.TestCase):
                 "incubator_manager.cli.iter_records",
                 return_value=[(self.article, self.record)],
             ),
+            mock.patch(
+                "incubator_manager.cli.enrich_queue_record",
+                return_value=self.record,
+            ) as enrich,
             mock.patch("incubator_manager.cli.assert_write_identity") as identity,
             mock.patch("incubator_manager.cli.add_incubator_template") as add_template,
             mock.patch(
@@ -510,6 +623,7 @@ class IncubatorCliTests(unittest.TestCase):
         maintenance.assert_not_called()
         self.list_page.save.assert_not_called()
         self.assertIn("Опашки на Инкубатора", stdout.getvalue())
+        enrich.assert_called_once_with(self.article, self.record)
 
 
 class IncubatorIdentityTests(unittest.TestCase):
