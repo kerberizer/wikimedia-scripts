@@ -28,6 +28,10 @@ rendering, and mutation code lives in the importable `incubator_manager`
 package so that the current behavior can be tested before workflow changes
 are introduced.
 
+Drafts which have spent more than 150 days in the Incubator are shown with a
+neutral long-stay state. Age alone does not make the manager add a deletion
+request. Existing deletion requests are left for separate human review.
+
 Check the Incubator manager with:
 
 ```sh

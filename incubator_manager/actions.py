@@ -43,13 +43,6 @@ def apply_maintenance_actions(site, records, config):
                 + config.sysop_ping,
                 delete_talk=True,
             )
-        elif record.status == "delete":
-            delete_or_mark(
-                site,
-                record.fullname,
-                "[[Уикипедия:Инкубатор/Регламент|повече от "
-                f"{config.force_delete_days} дни в инкубатора]]",
-            )
 
 
 def planned_actions(records, config):
@@ -63,8 +56,5 @@ def planned_actions(records, config):
     ):
         if record.status == "redirect":
             actions.append(f"delete-or-mark-page-and-talk\t{record.fullname}")
-        elif record.status == "delete":
-            actions.append(f"delete-or-mark-page\t{record.fullname}")
-
     actions.append(f"update-list\t{config.list_page_name}")
     return actions

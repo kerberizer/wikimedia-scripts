@@ -6,7 +6,7 @@ from unittest import mock
 
 import pywikibot
 
-from incubator_manager.actions import planned_actions
+from incubator_manager.actions import apply_maintenance_actions, planned_actions
 from incubator_manager.classify import (
     classify_age,
     inspect_templates,
@@ -55,16 +55,16 @@ class IncubatorClassificationTests(unittest.TestCase):
         )
         self.assertEqual(
             classify_age(
-                datetime.timedelta(days=self.config.force_delete_days), self.config
+                datetime.timedelta(days=self.config.long_stay_days), self.config
             ),
             "critical",
         )
         self.assertEqual(
             classify_age(
-                datetime.timedelta(days=self.config.force_delete_days, seconds=1),
+                datetime.timedelta(days=self.config.long_stay_days, seconds=1),
                 self.config,
             ),
-            "delete",
+            "long_stay",
         )
 
     def test_current_templates_and_positional_reviewer_are_recognized(self):
@@ -93,6 +93,16 @@ class IncubatorClassificationTests(unittest.TestCase):
                 "Чернова:A", "x", "Author", age_status="critical", review_requested=True
             ).status,
             "critical",
+        )
+        self.assertEqual(
+            DraftRecord(
+                "Чернова:A",
+                "x",
+                "Author",
+                age_status="long_stay",
+                review_requested=True,
+            ).status,
+            "long_stay",
         )
         self.assertEqual(
             DraftRecord(
@@ -188,13 +198,14 @@ class IncubatorOutputTests(unittest.TestCase):
                 fullname="Чернова:Група/По-стара",
                 timestamp=pywikibot.Timestamp(2026, 11, 1, 2, 3, 4),
                 author="Author One",
+                age_status="long_stay",
             ),
         ]
         expected = (
             "{{Уикипедия:Инкубатор/Списък на статиите/Header}}\n"
             '{| class="wikitable sortable plainlinks" style="font-size: small;"\n'
             "! Статия !! Влязла ([[UTC]]) !! Автор !! Проверяващ\n"
-            "|-\n"
+            '|- style="background-color: #eaecf0;"\n'
             "| [[Чернова:Група/По-стара|По-стара]] "
             "([[{{TALKPAGENAME:Чернова:Група/По-стара}}|беседа]] - "
             "[{{fullurl:Чернова:Група/По-стара|action=history}} история]) || "
@@ -231,7 +242,7 @@ class IncubatorOutputTests(unittest.TestCase):
                 "Чернова:Стара",
                 datetime.datetime(2026, 11, 1),
                 "Author",
-                age_status="delete",
+                age_status="long_stay",
                 needs_incubator_template=True,
             ),
             DraftRecord(
@@ -247,10 +258,21 @@ class IncubatorOutputTests(unittest.TestCase):
                 "add-template\tЧернова:Нова",
                 "add-template\tЧернова:Стара",
                 "delete-or-mark-page-and-talk\tЧернова:Пренасочване",
-                "delete-or-mark-page\tЧернова:Стара",
                 "update-list\tУикипедия:Инкубатор/Списък на статиите",
             ],
         )
+
+    def test_long_stay_draft_has_no_maintenance_action(self):
+        long_stay = DraftRecord(
+            "Чернова:Стара",
+            pywikibot.Timestamp(2026, 1, 1),
+            "Author",
+            age_status="long_stay",
+        )
+        with mock.patch("incubator_manager.actions.delete_or_mark") as delete_or_mark:
+            apply_maintenance_actions(mock.Mock(), [long_stay], self.config)
+
+        delete_or_mark.assert_not_called()
 
 
 class IncubatorCliTests(unittest.TestCase):

@@ -21,8 +21,8 @@ def is_proposed_for_deletion(text):
 
 
 def classify_age(elapsed, config):
-    if elapsed > datetime.timedelta(days=config.force_delete_days):
-        return "delete"
+    if elapsed > datetime.timedelta(days=config.long_stay_days):
+        return "long_stay"
     if elapsed > datetime.timedelta(days=config.critical_days):
         return "critical"
     if elapsed > datetime.timedelta(days=config.warning_days):

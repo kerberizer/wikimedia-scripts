@@ -2,7 +2,7 @@ from .classify import legacy_timestamp_text
 
 ROW_COLORS = {
     "redirect": "#ff66ff",
-    "delete": "#ff6666",
+    "long_stay": "#eaecf0",
     "critical": "#ffb366",
     "warning": "#ffff66",
     "review": "#66ff66",

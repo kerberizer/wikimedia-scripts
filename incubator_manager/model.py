@@ -30,7 +30,7 @@ class DraftRecord:
     def status(self):
         if self.is_redirect:
             return "redirect"
-        if self.age_status in ("delete", "critical"):
+        if self.age_status in ("long_stay", "critical"):
             return self.age_status
         if self.review_requested:
             return "review"

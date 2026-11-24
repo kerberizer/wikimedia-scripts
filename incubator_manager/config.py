@@ -10,7 +10,7 @@ class Config:
     article_prefix: str = ""
     article_namespace: str = "Чернова"
     search_moves_days: int = 360
-    force_delete_days: int = 150
+    long_stay_days: int = 150
     critical_days: int = 120
     warning_days: int = 90
     sysops_to_ping: tuple[str, ...] = ("Iliev",)
