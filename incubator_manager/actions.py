@@ -6,6 +6,14 @@ from pywikibot.exceptions import APIError
 from .classify import is_proposed_for_deletion
 
 
+def save_page_if_changed(page, text, summary):
+    if page.text == text:
+        return False
+    page.text = text
+    page.save(summary=summary, quiet=True)
+    return True
+
+
 def delete_or_mark(site, article_name, reason, delete_talk=False):
     page = pywikibot.Page(site, article_name)
     pages = [page]

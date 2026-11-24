@@ -6,7 +6,11 @@ from unittest import mock
 
 import pywikibot
 
-from incubator_manager.actions import apply_maintenance_actions, planned_actions
+from incubator_manager.actions import (
+    apply_maintenance_actions,
+    planned_actions,
+    save_page_if_changed,
+)
 from incubator_manager.classify import (
     classify_age,
     inspect_templates,
@@ -447,6 +451,25 @@ class IncubatorOutputTests(unittest.TestCase):
 
         delete_or_mark.assert_not_called()
 
+    def test_unchanged_generated_page_is_not_saved(self):
+        page = mock.Mock()
+        page.text = "same"
+
+        changed = save_page_if_changed(page, "same", "summary")
+
+        self.assertFalse(changed)
+        page.save.assert_not_called()
+
+    def test_changed_generated_page_is_saved_once(self):
+        page = mock.Mock()
+        page.text = "old"
+
+        changed = save_page_if_changed(page, "new", "summary")
+
+        self.assertTrue(changed)
+        self.assertEqual(page.text, "new")
+        page.save.assert_called_once_with(summary="summary", quiet=True)
+
 
 class IncubatorQueuePreviewTests(unittest.TestCase):
     def setUp(self):
@@ -581,6 +604,7 @@ class IncubatorCliTests(unittest.TestCase):
             mock.patch(
                 "incubator_manager.cli.apply_maintenance_actions"
             ) as maintenance,
+            mock.patch("incubator_manager.cli.save_page_if_changed") as save_page,
         ):
             result = run(dry_run=False, config=self.config)
 
@@ -588,9 +612,10 @@ class IncubatorCliTests(unittest.TestCase):
         identity.assert_called_once_with(self.site, "Eliza Beth")
         add_template.assert_called_once_with(self.article)
         maintenance.assert_called_once_with(self.site, [self.record], self.config)
-        self.list_page.save.assert_called_once_with(
+        save_page.assert_called_once_with(
+            self.list_page,
+            mock.ANY,
             summary="Бот: актуализация на списъка",
-            quiet=True,
         )
 
     def test_queue_preview_performs_no_writes(self):

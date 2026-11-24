@@ -4,7 +4,12 @@ import sys
 
 import pywikibot
 
-from .actions import add_incubator_template, apply_maintenance_actions, planned_actions
+from .actions import (
+    add_incubator_template,
+    apply_maintenance_actions,
+    planned_actions,
+    save_page_if_changed,
+)
 from .collect import iter_records
 from .config import Config
 from .identity import assert_write_identity
@@ -60,8 +65,11 @@ def run(dry_run=False, preview_queues=False, config=None):
         return 0
 
     apply_maintenance_actions(site, records, config)
-    list_page.text = list_text
-    list_page.save(summary="Бот: актуализация на списъка", quiet=True)
+    save_page_if_changed(
+        list_page,
+        list_text,
+        summary="Бот: актуализация на списъка",
+    )
     return 0
 
 
