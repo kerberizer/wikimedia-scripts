@@ -4,6 +4,36 @@ These scripts drive [Kerberizer](https://meta.wikimedia.org/wiki/User:Kerberizer
 
 The code is likely crude and mostly undocumented. It's released in the public domain under the [CC0](http://creativecommons.org/publicdomain/zero/1.0/) license.
 
+## Bulgarian Wikipedia Incubator manager
+
+`incubator-article-list.py` maintains the draft list and the existing
+Incubator templates on the Bulgarian Wikipedia. Its no-argument invocation is
+the production, write-enabled mode retained for the existing systemd timer:
+
+```sh
+./incubator-article-list.py
+```
+
+Use `--dry-run` for a read-only inspection. It prints planned actions to
+standard error and the generated list wikitext to standard output:
+
+```sh
+./incubator-article-list.py --dry-run
+```
+
+The entry point is deliberately thin. The collection, classification,
+rendering, and mutation code lives in the importable `incubator_manager`
+package so that the current behavior can be tested before workflow changes
+are introduced.
+
+Check the Incubator manager with:
+
+```sh
+ruff check incubator-article-list.py incubator_manager tests/test_incubator_manager.py
+ruff format --check incubator-article-list.py incubator_manager tests/test_incubator_manager.py
+python -m unittest tests.test_incubator_manager -v
+```
+
 ## Unblock-request notifier
 
 `wp-unblock-request-notifier.py` watches
