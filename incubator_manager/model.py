@@ -7,7 +7,7 @@ MALFORMED_REVIEW_TEMPLATE = (
 POSITIONAL_REVIEW_PARAMETER = (
     '<span style="color: red; font-weight: bold;">Грешно попълнен шаблон '
     "{{ш|Чернова за преглед}}: използвайте именувания параметър "
-    "<code>проверяващ=</code>.</span>"
+    "<code>преглеждащ=</code>.</span>"
 )
 
 

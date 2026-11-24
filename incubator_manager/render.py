@@ -50,7 +50,7 @@ def render_list(records, config):
     content = [
         config.list_header_template,
         '{| class="wikitable sortable plainlinks" style="font-size: small;"',
-        "! Статия !! Влязла ([[UTC]]) !! Автор !! Проверяващ",
+        "! Статия !! Влязла ([[UTC]]) !! Автор !! Преглеждащ",
     ]
     content.extend(
         render_row(record)

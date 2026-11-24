@@ -23,6 +23,7 @@ from incubator_manager.model import (
     POSITIONAL_REVIEW_PARAMETER,
     DraftRecord,
 )
+from incubator_manager.queues import group_records, render_queue_preview
 from incubator_manager.render import render_list
 
 
@@ -92,8 +93,8 @@ class IncubatorClassificationTests(unittest.TestCase):
         self.assertTrue(base.has_incubator_template)
 
     def test_named_reviewer_is_accepted_for_new_and_legacy_templates(self):
-        canonical = inspect_templates("{{Чернова за преглед|проверяващ=Example}}")
-        legacy = inspect_templates("{{инкубатор-проверка|проверяващ=Example}}")
+        canonical = inspect_templates("{{Чернова за преглед|преглеждащ=Example}}")
+        legacy = inspect_templates("{{инкубатор-проверка|преглеждащ=Example}}")
 
         self.assertEqual(canonical.reviewer, "Example")
         self.assertEqual(canonical.review_template_name, "чернова за преглед")
@@ -120,6 +121,12 @@ class IncubatorClassificationTests(unittest.TestCase):
 
         self.assertEqual(state.reviewer, "")
         self.assertEqual(state.reviewer_diagnostic, MALFORMED_REVIEW_TEMPLATE)
+
+    def test_unused_checking_parameter_is_not_kept_as_an_alias(self):
+        state = inspect_templates("{{Чернова за преглед|проверяващ=Example}}")
+
+        self.assertEqual(state.reviewer, "")
+        self.assertEqual(state.reviewer_diagnostic, POSITIONAL_REVIEW_PARAMETER)
 
     def test_redirect_and_deletion_patterns_remain_compatible(self):
         self.assertTrue(is_broken_redirect("text\n#ПРЕНАСОЧВАНЕ [[Статия]]"))
@@ -271,7 +278,7 @@ class IncubatorOutputTests(unittest.TestCase):
         expected = (
             "{{Уикипедия:Инкубатор/Списък на статиите/Header}}\n"
             '{| class="wikitable sortable plainlinks" style="font-size: small;"\n'
-            "! Статия !! Влязла ([[UTC]]) !! Автор !! Проверяващ\n"
+            "! Статия !! Влязла ([[UTC]]) !! Автор !! Преглеждащ\n"
             '|- style="background-color: #eaecf0;"\n'
             "| [[Чернова:Група/По-стара|По-стара]] "
             "([[{{TALKPAGENAME:Чернова:Група/По-стара}}|беседа]] - "
@@ -291,7 +298,7 @@ class IncubatorOutputTests(unittest.TestCase):
         expected = (
             "{{Уикипедия:Инкубатор/Списък на статиите/Header}}\n"
             '{| class="wikitable sortable plainlinks" style="font-size: small;"\n'
-            "! Статия !! Влязла ([[UTC]]) !! Автор !! Проверяващ\n"
+            "! Статия !! Влязла ([[UTC]]) !! Автор !! Преглеждащ\n"
             "|-\n"
             "|}"
         )
@@ -340,6 +347,71 @@ class IncubatorOutputTests(unittest.TestCase):
             apply_maintenance_actions(mock.Mock(), [long_stay], self.config)
 
         delete_or_mark.assert_not_called()
+
+
+class IncubatorQueuePreviewTests(unittest.TestCase):
+    def setUp(self):
+        self.records = [
+            DraftRecord(
+                "Чернова:Чака",
+                pywikibot.Timestamp(2026, 11, 1),
+                "Author One",
+                review_requested=True,
+                help_requested=True,
+            ),
+            DraftRecord(
+                "Чернова:Проверява се",
+                pywikibot.Timestamp(2026, 11, 2),
+                "Author Two",
+                reviewer="[[User:Reviewer|Reviewer]] {{unsafe}} <tag>",
+                review_requested=True,
+            ),
+            DraftRecord(
+                "Чернова:Стара",
+                pywikibot.Timestamp(2026, 1, 1),
+                "Author Three",
+                age_status="long_stay",
+                reviewer="Legacy Reviewer",
+                review_requested=True,
+                legacy_reviewer_parameter=True,
+            ),
+        ]
+
+    def test_queue_groups_overlap_without_collapsing_states(self):
+        groups = group_records(self.records)
+
+        self.assertEqual(
+            [record.fullname for record in groups.unclaimed_reviews], ["Чернова:Чака"]
+        )
+        self.assertEqual(
+            [record.fullname for record in groups.claimed_reviews],
+            ["Чернова:Стара", "Чернова:Проверява се"],
+        )
+        self.assertEqual(
+            [record.fullname for record in groups.review_diagnostics],
+            ["Чернова:Стара"],
+        )
+        self.assertEqual(
+            [record.fullname for record in groups.help_requests], ["Чернова:Чака"]
+        )
+        self.assertEqual(
+            [record.fullname for record in groups.long_stay], ["Чернова:Стара"]
+        )
+
+    def test_queue_preview_escapes_untrusted_reviewer_wikitext(self):
+        preview = render_queue_preview(self.records)
+
+        self.assertIn("== Чакат преглеждащ (1) ==", preview)
+        self.assertIn("== Преглеждат се (2) ==", preview)
+        self.assertIn("== Диагностики при преглед (1) ==", preview)
+        self.assertIn("== Искат помощ (1) ==", preview)
+        self.assertIn("== Чернови с продължителен престой (1) ==", preview)
+        self.assertIn(
+            "&#91;&#91;User:Reviewer&#124;Reviewer&#93;&#93; "
+            "&#123;&#123;unsafe&#125;&#125; &lt;tag&gt;",
+            preview,
+        )
+        self.assertNotIn("{{unsafe}}", preview)
 
 
 class IncubatorCliTests(unittest.TestCase):
@@ -411,6 +483,33 @@ class IncubatorCliTests(unittest.TestCase):
             summary="Бот: актуализация на списъка",
             quiet=True,
         )
+
+    def test_queue_preview_performs_no_writes(self):
+        stdout = io.StringIO()
+        with (
+            mock.patch("incubator_manager.cli.pywikibot.Site", return_value=self.site),
+            mock.patch(
+                "incubator_manager.cli.pywikibot.Page", return_value=self.list_page
+            ),
+            mock.patch(
+                "incubator_manager.cli.iter_records",
+                return_value=[(self.article, self.record)],
+            ),
+            mock.patch("incubator_manager.cli.assert_write_identity") as identity,
+            mock.patch("incubator_manager.cli.add_incubator_template") as add_template,
+            mock.patch(
+                "incubator_manager.cli.apply_maintenance_actions"
+            ) as maintenance,
+            redirect_stdout(stdout),
+        ):
+            result = run(preview_queues=True, config=self.config)
+
+        self.assertEqual(result, 0)
+        identity.assert_not_called()
+        add_template.assert_not_called()
+        maintenance.assert_not_called()
+        self.list_page.save.assert_not_called()
+        self.assertIn("Опашки на Инкубатора", stdout.getvalue())
 
 
 class IncubatorIdentityTests(unittest.TestCase):

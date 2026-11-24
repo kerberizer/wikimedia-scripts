@@ -48,20 +48,19 @@ def inspect_reviewer(template, matched_name):
     parameters = {
         str(parameter.name).strip(): parameter for parameter in template.params
     }
-    unknown_parameters = set(parameters) - {"1", "проверяващ"}
-    named_reviewer = parameters.get("проверяващ")
+    unknown_parameters = set(parameters) - {"1", "преглеждащ"}
+    named_reviewer = parameters.get("преглеждащ")
     positional_reviewer = parameters.get("1")
 
-    if unknown_parameters:
-        return "", MALFORMED_REVIEW_TEMPLATE, False
-
     if matched_name == CANONICAL_REVIEW_TEMPLATE:
-        if positional_reviewer is not None:
+        if unknown_parameters or positional_reviewer is not None:
             return "", POSITIONAL_REVIEW_PARAMETER, False
         if named_reviewer is not None:
             return str(named_reviewer.value).strip(), "", False
         return "", "", False
 
+    if unknown_parameters:
+        return "", MALFORMED_REVIEW_TEMPLATE, False
     if named_reviewer is not None and positional_reviewer is not None:
         return "", MALFORMED_REVIEW_TEMPLATE, False
     if named_reviewer is not None:

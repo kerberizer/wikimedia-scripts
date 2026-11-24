@@ -23,6 +23,18 @@ standard error and the generated list wikitext to standard output:
 ./incubator-article-list.py --dry-run
 ```
 
+Use `--preview-queues` for a read-only local wikitext preview of the unclaimed
+and claimed review queues, review diagnostics, help requests, and long-stay
+drafts:
+
+```sh
+./incubator-article-list.py --preview-queues
+```
+
+The preview deliberately labels reviewer values as unverified and escapes
+their wikitext. It does not yet calculate request timestamps or talk-page
+activity, and is not intended for direct publication.
+
 The entry point is deliberately thin. The collection, classification,
 rendering, and mutation code lives in the importable `incubator_manager`
 package so that the current behavior can be tested before workflow changes
@@ -36,7 +48,7 @@ During the template migration, the manager recognizes both the legacy
 `{{в инкубатора}}`, `{{инкубатор-проверка}}`, and `{{помощ}}` names and the
 planned `{{Чернова}}`, `{{Чернова за преглед}}`, and
 `{{Чернова за помощ}}` family. The canonical review syntax uses
-`проверяващ=`. Legacy positional reviewer values remain readable until their
+`преглеждащ=`. Legacy positional reviewer values remain readable until their
 two current uses are deliberately migrated; positional values on the new
 template produce a diagnostic instead of claiming a review.
 
