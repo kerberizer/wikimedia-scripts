@@ -117,6 +117,7 @@ def additional_signals(record):
 
 def render_table(records, columns):
     lines = [
+        '<div style="overflow-x: auto;">',
         '{| class="wikitable sortable plainlinks" style="font-size: small;"',
         "! " + " !! ".join(header for header, _value in columns),
     ]
@@ -124,6 +125,7 @@ def render_table(records, columns):
         values = [value(record) for _header, value in columns]
         lines.extend(("|-", "| " + " || ".join(values)))
     lines.append("|}")
+    lines.append("</div>")
     return "\n".join(lines)
 
 
@@ -145,15 +147,18 @@ HELP_REQUEST_COLUMN = (
 )
 
 
-def render_queue_preview(records):
+def render_task_page(records):
     groups = group_records(records)
     sections = [
-        "<!-- Локален преглед; не публикувайте без отделен преглед. -->",
-        "= Опашки на Инкубатора – локален преглед =",
         (
-            "''Моментът на заявката е началото на текущото непрекъснато "
-            "присъствие на съответния шаблон. Опашката осигурява видимост, "
-            "но не обещава срок за отговор.''"
+            "<!-- Страницата се обновява автоматично. Обсъждайте конкретната "
+            "чернова на нейната беседа. -->"
+        ),
+        (
+            "Тук са събрани черновите, които чакат преглед или помощ, както "
+            "и тези с продължителен престой. Моментът на заявката е началото "
+            "на текущото непрекъснато присъствие на съответния шаблон. "
+            "Опашката осигурява видимост, но не обещава срок за отговор."
         ),
         f"== Чакат преглеждащ ({len(groups.unclaimed_reviews)}) ==",
         render_table(
@@ -211,3 +216,7 @@ def render_queue_preview(records):
         ),
     ]
     return "\n\n".join(sections)
+
+
+def render_queue_preview(records):
+    return render_task_page(records)

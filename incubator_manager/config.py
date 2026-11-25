@@ -7,6 +7,7 @@ class Config:
     site_family: str = "wikipedia"
     expected_username: str = "Eliza Beth"
     list_page_name: str = "Уикипедия:Инкубатор/Списък на статиите"
+    task_page_name: str = "Уикипедия:Инкубатор/Задачи"
     article_prefix: str = ""
     article_namespace: str = "Чернова"
     search_moves_days: int = 360

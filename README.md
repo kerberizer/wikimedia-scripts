@@ -23,9 +23,9 @@ standard error and the generated list wikitext to standard output:
 ./incubator-article-list.py --dry-run
 ```
 
-Use `--preview-queues` for a read-only local wikitext preview of the unclaimed
-and claimed review queues, review diagnostics, help requests, and long-stay
-drafts:
+Use `--preview-queues` for the exact read-only wikitext proposed for
+`Уикипедия:Инкубатор/Задачи`, including the unclaimed and claimed review
+queues, review diagnostics, help requests, and long-stay drafts:
 
 ```sh
 ./incubator-article-list.py --preview-queues
@@ -35,7 +35,9 @@ The preview does not trust reviewer-parameter wikitext as an identity. It uses
 the editor of the revision which introduced the current reviewer claim,
 reconstructs the start of the current continuous review or help-template
 episode, and shows the latest talk-page revision or that no talk page exists.
-It is not intended for direct publication.
+The separate `--publish-queues` flag updates the task page in addition to the
+existing inventory. Ordinary timer runs do not publish it unless that flag is
+explicitly added.
 
 The entry point is deliberately thin. The collection, classification,
 rendering, and mutation code lives in the importable `incubator_manager`

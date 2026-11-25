@@ -33,7 +33,11 @@ from incubator_manager.model import (
     POSITIONAL_REVIEW_PARAMETER,
     DraftRecord,
 )
-from incubator_manager.queues import group_records, render_queue_preview
+from incubator_manager.queues import (
+    group_records,
+    render_queue_preview,
+    render_task_page,
+)
 from incubator_manager.render import render_list
 
 
@@ -558,6 +562,14 @@ class IncubatorQueuePreviewTests(unittest.TestCase):
         self.assertIn("2026-11-14 00:00:00", preview)
         self.assertIn("няма беседа", preview)
 
+    def test_task_page_has_public_explanation_and_automation_notice(self):
+        page = render_task_page(self.records)
+
+        self.assertIn("Страницата се обновява автоматично", page)
+        self.assertIn("Опашката осигурява видимост, но не обещава срок", page)
+        self.assertEqual(page.count('<div style="overflow-x: auto;">'), 5)
+        self.assertNotIn("локален преглед", page.casefold())
+
 
 class IncubatorCliTests(unittest.TestCase):
     def setUp(self):
@@ -660,8 +672,52 @@ class IncubatorCliTests(unittest.TestCase):
         add_template.assert_not_called()
         maintenance.assert_not_called()
         self.list_page.save.assert_not_called()
-        self.assertIn("Опашки на Инкубатора", stdout.getvalue())
+        self.assertIn("Страницата се обновява автоматично", stdout.getvalue())
         enrich.assert_called_once_with(self.article, self.record)
+
+    def test_explicit_queue_publication_saves_guarded_task_page(self):
+        task_page = mock.Mock()
+        enriched_record = mock.Mock()
+        with (
+            mock.patch("incubator_manager.cli.pywikibot.Site", return_value=self.site),
+            mock.patch(
+                "incubator_manager.cli.pywikibot.Page",
+                side_effect=[self.list_page, task_page],
+            ),
+            mock.patch(
+                "incubator_manager.cli.iter_records",
+                return_value=[(self.article, self.record)],
+            ),
+            mock.patch(
+                "incubator_manager.cli.enrich_queue_record",
+                return_value=enriched_record,
+            ) as enrich,
+            mock.patch("incubator_manager.cli.assert_write_identity") as identity,
+            mock.patch("incubator_manager.cli.add_incubator_template"),
+            mock.patch("incubator_manager.cli.apply_maintenance_actions"),
+            mock.patch("incubator_manager.cli.render_list", return_value="list"),
+            mock.patch("incubator_manager.cli.render_task_page", return_value="tasks"),
+            mock.patch("incubator_manager.cli.save_page_if_changed") as save_page,
+        ):
+            result = run(publish_queues=True, config=self.config)
+
+        self.assertEqual(result, 0)
+        identity.assert_called_once_with(self.site, "Eliza Beth")
+        enrich.assert_called_once_with(self.article, self.record)
+        save_page.assert_has_calls(
+            [
+                mock.call(
+                    self.list_page,
+                    "list",
+                    summary="Бот: актуализация на списъка",
+                ),
+                mock.call(
+                    task_page,
+                    "tasks",
+                    summary="Бот: актуализация на задачите в Инкубатора",
+                ),
+            ]
+        )
 
 
 class IncubatorIdentityTests(unittest.TestCase):
