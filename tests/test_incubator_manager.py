@@ -117,6 +117,19 @@ class IncubatorClassificationTests(unittest.TestCase):
         self.assertEqual(legacy.review_template_name, "инкубатор-проверка")
         self.assertFalse(legacy.legacy_reviewer_parameter)
 
+    def test_canonical_review_can_also_request_help(self):
+        combined = inspect_templates(
+            "{{Чернова за преглед|преглеждащ=Example|помощ=да}}"
+        )
+        empty = inspect_templates("{{Чернова за преглед|помощ=}}")
+
+        self.assertTrue(combined.review_requested)
+        self.assertTrue(combined.help_requested)
+        self.assertEqual(combined.reviewer, "Example")
+        self.assertEqual(combined.reviewer_diagnostic, "")
+        self.assertTrue(empty.review_requested)
+        self.assertFalse(empty.help_requested)
+
     def test_legacy_positional_reviewer_remains_compatible_during_migration(self):
         state = inspect_templates("{{инкубатор-проверка|Example}}")
 
@@ -311,6 +324,26 @@ class IncubatorQueueMetadataTests(unittest.TestCase):
 
         timestamps = find_current_request_timestamps(revisions, record)
 
+        self.assertEqual(timestamps.help_request, revisions[1]["timestamp"])
+
+    def test_combined_review_help_parameter_continues_both_episodes(self):
+        record = DraftRecord(
+            "Чернова:Пример",
+            self.start,
+            "Author",
+            review_requested=True,
+            help_requested=True,
+        )
+        revisions = [
+            self.revision(0, "{{Чернова за преглед|помощ=да}}"),
+            self.revision(1, "{{Чернова за преглед}}\n{{Помощ}}"),
+            self.revision(2, "{{Чернова за преглед}}"),
+            self.revision(3, "{{Чернова}}"),
+        ]
+
+        timestamps = find_current_request_timestamps(revisions, record)
+
+        self.assertEqual(timestamps.review_request, revisions[2]["timestamp"])
         self.assertEqual(timestamps.help_request, revisions[1]["timestamp"])
 
     def test_hidden_revision_makes_an_open_episode_timestamp_unknown(self):

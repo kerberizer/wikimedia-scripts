@@ -48,7 +48,10 @@ def inspect_reviewer(template, matched_name):
     parameters = {
         str(parameter.name).strip(): parameter for parameter in template.params
     }
-    unknown_parameters = set(parameters) - {"1", "преглеждащ"}
+    allowed_parameters = {"1", "преглеждащ"}
+    if matched_name == CANONICAL_REVIEW_TEMPLATE:
+        allowed_parameters.add("помощ")
+    unknown_parameters = set(parameters) - allowed_parameters
     named_reviewer = parameters.get("преглеждащ")
     positional_reviewer = parameters.get("1")
 
@@ -101,6 +104,8 @@ def inspect_templates(text):
             legacy_reviewer_parameter = legacy_reviewer_parameter or legacy_parameter
             if review_name == CANONICAL_REVIEW_TEMPLATE:
                 has_incubator_template = True
+                if template.has("помощ") and str(template.get("помощ").value).strip():
+                    help_requested = True
         elif help_name:
             help_requested = True
             if help_name == "чернова за помощ":
