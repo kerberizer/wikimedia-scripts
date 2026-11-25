@@ -30,7 +30,7 @@ def delete_or_mark(site, article_name, reason, delete_talk=False):
 
 
 def add_incubator_template(article):
-    article.text = "{{в инкубатора}}\n" + article.text
+    article.text = "{{Чернова}}\n" + article.text
     try:
         article.save(summary="Бот: добавяне на помощен шаблон за чернови", quiet=True)
     except APIError as error:

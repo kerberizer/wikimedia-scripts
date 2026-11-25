@@ -46,13 +46,15 @@ Drafts which have spent more than 150 days in the Incubator are shown with a
 neutral long-stay state. Age alone does not make the manager add a deletion
 request. Existing deletion requests are left for separate human review.
 
-During the template migration, the manager recognizes both the legacy
+The canonical draft templates are live. During the remaining migration, the
+manager recognizes both the legacy
 `{{в инкубатора}}`, `{{инкубатор-проверка}}`, and `{{помощ}}` names and the
-planned `{{Чернова}}`, `{{Чернова за преглед}}`, and
+canonical `{{Чернова}}`, `{{Чернова за преглед}}`, and
 `{{Чернова за помощ}}` family. The canonical review syntax uses
-`преглеждащ=`. Legacy positional reviewer values remain readable until their
-two current uses are deliberately migrated; positional values on the new
-template produce a diagnostic instead of claiming a review.
+`преглеждащ=`. Legacy positional reviewer values remain readable for
+compatibility; positional values on the new template produce a diagnostic
+instead of claiming a review. Missing base markers are now added with the
+canonical `{{Чернова}}` name.
 
 Check the Incubator manager with:
 

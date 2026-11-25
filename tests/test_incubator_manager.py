@@ -7,6 +7,7 @@ from unittest import mock
 import pywikibot
 
 from incubator_manager.actions import (
+    add_incubator_template,
     apply_maintenance_actions,
     planned_actions,
     save_page_if_changed,
@@ -450,6 +451,18 @@ class IncubatorOutputTests(unittest.TestCase):
             apply_maintenance_actions(mock.Mock(), [long_stay], self.config)
 
         delete_or_mark.assert_not_called()
+
+    def test_missing_base_template_is_added_with_canonical_name(self):
+        article = mock.Mock()
+        article.text = "Съдържание"
+
+        add_incubator_template(article)
+
+        self.assertEqual(article.text, "{{Чернова}}\nСъдържание")
+        article.save.assert_called_once_with(
+            summary="Бот: добавяне на помощен шаблон за чернови",
+            quiet=True,
+        )
 
     def test_unchanged_generated_page_is_not_saved(self):
         page = mock.Mock()
