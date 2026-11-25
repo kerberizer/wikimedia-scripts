@@ -568,7 +568,7 @@ class IncubatorQueuePreviewTests(unittest.TestCase):
             ["Чернова:Стара", "Чернова:Преглежда се"],
         )
         self.assertEqual(
-            [record.fullname for record in groups.review_diagnostics],
+            [record.fullname for record in groups.technical_issues],
             ["Чернова:Стара"],
         )
         self.assertEqual(
@@ -583,7 +583,10 @@ class IncubatorQueuePreviewTests(unittest.TestCase):
 
         self.assertIn("== Чакат преглеждащ (1) ==", preview)
         self.assertIn("== Преглеждат се (2) ==", preview)
-        self.assertIn("== Диагностики при преглед (1) ==", preview)
+        self.assertIn(
+            "== Чернови, нуждаещи се от техническа проверка (1) ==",
+            preview,
+        )
         self.assertIn("== Искат помощ (1) ==", preview)
         self.assertIn("== Чернови с продължителен престой (1) ==", preview)
         self.assertIn("{{потребител|Reviewer}}", preview)
@@ -602,6 +605,24 @@ class IncubatorQueuePreviewTests(unittest.TestCase):
         self.assertIn("Опашката осигурява видимост, но не обещава срок", page)
         self.assertEqual(page.count('<div style="overflow-x: auto;">'), 5)
         self.assertNotIn("локален преглед", page.casefold())
+
+    def test_empty_task_sections_explain_their_purpose_without_empty_tables(self):
+        page = render_task_page([])
+
+        self.assertIn(
+            "Заявки за цялостен преглед, които още не са поети от редактор.",
+            page,
+        )
+        self.assertIn(
+            "Автоматично открити необичайни или неправилни състояния",
+            page,
+        )
+        self.assertIn(
+            "включването тук не е само по себе си предложение за изтриване.",
+            page,
+        )
+        self.assertEqual(page.count("''Няма.''"), 5)
+        self.assertNotIn('<div style="overflow-x: auto;">', page)
 
 
 class IncubatorCliTests(unittest.TestCase):

@@ -8,7 +8,7 @@ from .render import article_link
 class QueueGroups:
     unclaimed_reviews: tuple
     claimed_reviews: tuple
-    review_diagnostics: tuple
+    technical_issues: tuple
     help_requests: tuple
     long_stay: tuple
 
@@ -33,7 +33,7 @@ def group_records(records):
                 key=lambda record: record_sort_key(record, "review_request_timestamp"),
             )
         ),
-        review_diagnostics=tuple(
+        technical_issues=tuple(
             sorted(
                 (
                     record
@@ -95,7 +95,7 @@ def talk_activity(record):
     return timestamp_text(record.talk_timestamp)
 
 
-def review_diagnostic(record):
+def technical_issue(record):
     messages = []
     if record.legacy_reviewer_parameter:
         messages.append("временен позиционен параметър в {{ш|Инкубатор-проверка}}")
@@ -129,6 +129,15 @@ def render_table(records, columns):
     return "\n".join(lines)
 
 
+def render_section(title, description, records, columns):
+    parts = [f"== {title} ({len(records)}) ==", description]
+    if records:
+        parts.append(render_table(records, columns))
+    else:
+        parts.append("''Няма.''")
+    return "\n\n".join(parts)
+
+
 BASE_COLUMNS = (
     ("Чернова", article_link),
     ("Влязла ([[UTC]])", lambda record: timestamp_text(record.timestamp)),
@@ -160,8 +169,9 @@ def render_task_page(records):
             "на текущото непрекъснато присъствие на съответния шаблон. "
             "Опашката осигурява видимост, но не обещава срок за отговор."
         ),
-        f"== Чакат преглеждащ ({len(groups.unclaimed_reviews)}) ==",
-        render_table(
+        render_section(
+            "Чакат преглеждащ",
+            "Заявки за цялостен преглед, които още не са поети от редактор.",
             groups.unclaimed_reviews,
             (
                 BASE_COLUMNS[0],
@@ -170,8 +180,9 @@ def render_task_page(records):
                 *BASE_COLUMNS[1:],
             ),
         ),
-        f"== Преглеждат се ({len(groups.claimed_reviews)}) ==",
-        render_table(
+        render_section(
+            "Преглеждат се",
+            "Заявки, за които редактор е отбелязал, че е поел прегледа.",
             groups.claimed_reviews,
             (
                 BASE_COLUMNS[0],
@@ -188,19 +199,27 @@ def render_task_page(records):
                 *BASE_COLUMNS[1:],
             ),
         ),
-        f"== Диагностики при преглед ({len(groups.review_diagnostics)}) ==",
-        render_table(
-            groups.review_diagnostics,
+        render_section(
+            "Чернови, нуждаещи се от техническа проверка",
+            (
+                "Автоматично открити необичайни или неправилни състояния, "
+                "които трябва да бъдат проверени и при нужда поправени от човек."
+            ),
+            groups.technical_issues,
             (
                 BASE_COLUMNS[0],
                 REVIEW_REQUEST_COLUMN,
-                ("Диагностика", review_diagnostic),
+                ("Технически сигнал", technical_issue),
                 TALK_COLUMN,
                 *BASE_COLUMNS[1:],
             ),
         ),
-        f"== Искат помощ ({len(groups.help_requests)}) ==",
-        render_table(
+        render_section(
+            "Искат помощ",
+            (
+                "Чернови, за които е поискана помощ по конкретен въпрос; "
+                "подробностите следва да са на беседата."
+            ),
             groups.help_requests,
             (
                 BASE_COLUMNS[0],
@@ -209,8 +228,12 @@ def render_task_page(records):
                 *BASE_COLUMNS[1:],
             ),
         ),
-        f"== Чернови с продължителен престой ({len(groups.long_stay)}) ==",
-        render_table(
+        render_section(
+            "Чернови с продължителен престой",
+            (
+                "Чернови, останали в Инкубатора повече от 150 дни; включването "
+                "тук не е само по себе си предложение за изтриване."
+            ),
             groups.long_stay,
             (*BASE_COLUMNS, TALK_COLUMN, ("Други сигнали", additional_signals)),
         ),
